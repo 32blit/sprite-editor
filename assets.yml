@@ -3,6 +3,6 @@
 # References can be picked up by including assets.hpp
 
 assets.cpp:
-  assets/no-image.png:
-    name: asset_no_image
+  assets/sprites.png:
+    name: icon_sprites
 
