@@ -11,6 +11,8 @@ class Palette {
         blit::Pen *entries;
         unsigned int palette_entries = 0;
         unsigned int selected_colour = 0;
+        blit::Pen background_colour = blit::Pen(0, 0, 0, 255);
+        blit::Pen pen();
 
         bool picked = false;
 
@@ -20,5 +22,7 @@ class Palette {
         blit::Point draw_offset;
         bool has_focus = false;
         blit::Point hover_colour;
+
+        int selected_channel = 0;
 
 };

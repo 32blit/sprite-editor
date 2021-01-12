@@ -3,7 +3,7 @@
 using namespace blit;
 
 Mouse::Mouse() {
-    cursor = Vec2(screen.bounds.w / 2.0f, screen.bounds.h / 2.0f);
+    cursor = Vec2(160, 120);
 }
 
 void Mouse::render(uint32_t time) {
@@ -16,10 +16,15 @@ void Mouse::render(uint32_t time) {
 }
 
 void Mouse::update(uint32_t time) {
-    dpad_up = buttons.pressed & Button::DPAD_UP;
-    dpad_down = buttons.pressed & Button::DPAD_DOWN;
-    dpad_left = buttons.pressed & Button::DPAD_LEFT;
-    dpad_right = buttons.pressed & Button::DPAD_RIGHT;
+    dpad_up = buttons & Button::DPAD_UP;
+    dpad_down = buttons & Button::DPAD_DOWN;
+    dpad_left = buttons & Button::DPAD_LEFT;
+    dpad_right = buttons & Button::DPAD_RIGHT;
+
+    dpad_up_pressed = buttons.pressed & Button::DPAD_UP;
+    dpad_down_pressed = buttons.pressed & Button::DPAD_DOWN;
+    dpad_left_pressed = buttons.pressed & Button::DPAD_LEFT;
+    dpad_right_pressed = buttons.pressed & Button::DPAD_RIGHT;
 
     button_a = buttons & Button::A;
     button_b = buttons & Button::B;

@@ -20,6 +20,7 @@ uint8_t Editor::get_pixel(Point point) {
 }
 
 void Editor::render(uint32_t time) {
+    Pen background_colour = screen.pen;
     Rect clip = Rect(draw_offset, bounds);
 
     if(has_focus) {
@@ -27,7 +28,7 @@ void Editor::render(uint32_t time) {
         screen.pen = Pen(255, 255, 255);
         screen.rectangle(clip);
         clip.deflate(1);
-        screen.pen = Pen(0, 0, 0);
+        screen.pen = background_colour;
         screen.rectangle(clip);
         clip.deflate(1);
     }
@@ -42,6 +43,7 @@ void Editor::render(uint32_t time) {
     screen.rectangle(Rect(draw_offset + ((current_pixel - view_offset) * view_zoom), Size(view_zoom, view_zoom)));
 
     screen.clip = Rect(Point(0, 0), screen.bounds);
+    screen.pen = background_colour;
 }
 
 void Editor::update(uint32_t time, Mouse *mouse) {
@@ -66,13 +68,13 @@ void Editor::update(uint32_t time, Mouse *mouse) {
     if(view_offset.x < 0) view_offset.x = 0;
     if(view_offset.y < 0) view_offset.y = 0;
 
-    if(mouse->button_a) {
+    if(mouse->button_b) {
         set_pixel(current_pixel, selected_colour);
     }
-    if(mouse->button_b) {
+    if(mouse->button_a) {
         selected_colour = get_pixel(current_pixel);
     }
-    picked = mouse->button_b;
+    picked = mouse->button_a;
 }
 
 void Editor::set(blit::Surface *src, Palette *palette) {
