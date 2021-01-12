@@ -10,8 +10,12 @@ Palette::Palette(blit::Point draw_offset, Pen *palette) {
     entries = palette;
 }
 
-Pen Palette::pen() {
+Pen Palette::fg_pen() {
     return entries[selected_colour];
+}
+
+Pen Palette::bg_pen() {
+    return entries[selected_background_colour];
 }
 
 void Palette::render(uint32_t time) {
@@ -114,8 +118,7 @@ void Palette::update(uint32_t time, Mouse *mouse) {
     hover_colour.y /= (size.h + 1);
 
     if(mouse->button_y_pressed) {
-        background_colour = entries[hover_colour.x + hover_colour.y * 16];
-        background_colour.a = 255;
+        selected_background_colour = hover_colour.x + hover_colour.y * 16;
     }
 
     if(mouse->dpad_down_pressed) {

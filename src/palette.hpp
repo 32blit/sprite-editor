@@ -11,8 +11,9 @@ class Palette {
         blit::Pen *entries;
         unsigned int palette_entries = 0;
         unsigned int selected_colour = 0;
-        blit::Pen background_colour = blit::Pen(0, 0, 0, 255);
-        blit::Pen pen();
+        unsigned int selected_background_colour = 0;
+        blit::Pen bg_pen();
+        blit::Pen fg_pen();
 
         bool picked = false;
 

@@ -29,7 +29,8 @@ void init() {
 }
 
 void render(uint32_t time) {
-    screen.pen = palette.background_colour;
+    screen.pen = palette.bg_pen();
+    screen.pen.a = 255;
     screen.clear();
 
     screen.alpha = 255;
@@ -39,7 +40,8 @@ void render(uint32_t time) {
     screen.pen = Pen(0, 0, 0);
     screen.text("32blit Sprite Editor", minimal_font, Point(5, 4));
 
-    screen.pen = palette.background_colour;
+    screen.pen = palette.bg_pen();
+    screen.pen.a = 255;
     editor.render(time);
     palette.render(time);
 
