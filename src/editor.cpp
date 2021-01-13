@@ -2,12 +2,53 @@
 
 using namespace blit;
 
-Editor::Editor(blit::Point draw_offset) {
+Editor::Editor(blit::Point draw_offset, Palette *palette) {
+    this->palette = palette;
     this->draw_offset = draw_offset;
     buffer = new Surface(data, blit::PixelFormat::P, blit::Size(128, 128));
     buffer->palette = new Pen[256];
     for(auto i = 0u; i < 256; i++) {
         buffer->palette[i] = Pen((uint8_t)i, (uint8_t)i, (uint8_t)i, 255);
+    }
+    palette->entries = buffer->palette;
+}
+
+void Editor::load(std::string filename) {
+
+    temp = Surface::load(filename, buf, sizeof(buf));
+
+    if(temp) {
+        if(temp->palette) {
+            uint8_t *pen = temp->data;
+            for(auto y = 0u; y < buffer->bounds.h; y++) {
+                for(auto x = 0u; x < buffer->bounds.w; x++) {
+                    set_pixel(Point(x, y), *pen);
+                    pen++;
+                }
+            }
+            for(auto i = 0u; i < 256; i++) {
+                palette->entries[i] = temp->palette[i];
+            }
+        }
+        else{
+            Pen *pen = (Pen*)temp->data;
+            for(auto y = 0u; y < buffer->bounds.h; y++) {
+                for(auto x = 0u; x < buffer->bounds.w; x++) {
+                    auto index = palette->add(*pen);
+                    pen++;
+                    set_pixel(Point(x, y), index);
+                }
+            }
+        }
+
+        if(temp->palette) delete[] temp->palette;
+        delete temp;
+    }
+}
+
+void Editor::reset() {
+    for(auto i = 0u; i < 128 * 128; i++){
+        data[i] = 0;
     }
 }
 
@@ -55,7 +96,7 @@ void Editor::render_help(uint32_t time) {
 }
 
 void Editor::render_preview(uint32_t time) {
-    Pen preview_bg = buffer->palette[selected_background_colour];
+    Pen preview_bg = buffer->palette[palette->selected_background_colour];
 
     constexpr int padding = 17;
 
@@ -123,7 +164,7 @@ void Editor::render(uint32_t time) {
         Rect cursor = Rect(draw_offset + ((current_pixel - view_offset) * view_zoom), Size(view_zoom, view_zoom));
 
         // Selected colour
-        screen.pen = buffer->palette[selected_colour];
+        screen.pen = palette->fg_pen();
         screen.rectangle(cursor);
     
         // Pulsing inner cursor
@@ -219,23 +260,9 @@ void Editor::update(uint32_t time, Mouse *mouse) {
     };
 
     if(mouse->button_b) {
-        set_pixel(current_pixel, selected_colour);
+        set_pixel(current_pixel, palette->selected_colour);
     }
     if(mouse->button_a) {
-        selected_colour = get_pixel(current_pixel);
-    }
-    picked = mouse->button_a;
-}
-
-void Editor::set(blit::Surface *src, Palette *palette) {
-    if(!src->palette) {
-        Pen *pen = (Pen*)src->data;
-        for(auto y = 0u; y < src->bounds.h; y++) {
-            for(auto x = 0u; x < src->bounds.w; x++) {
-                auto index = palette->add(*pen);
-                pen++;
-                set_pixel(Point(x, y), index);
-            }
-        }
+        palette->selected_colour = get_pixel(current_pixel);
     }
 }

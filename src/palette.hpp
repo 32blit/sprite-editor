@@ -4,7 +4,7 @@
 
 class Palette {
     public:
-        Palette(blit::Point draw_offset, blit::Pen *palette);
+        Palette(blit::Point draw_offset);
         void render(uint32_t time);
         void update(uint32_t time, Mouse *mouse);
         int add(blit::Pen pen);
@@ -15,12 +15,13 @@ class Palette {
         blit::Pen bg_pen();
         blit::Pen fg_pen();
 
-        bool picked = false;
+        blit::Point draw_offset;
+        void reset();
+        void load(std::string filename);
 
     private:
         blit::Size size = blit::Size(7, 7);
         blit::Size bounds;
-        blit::Point draw_offset;
         bool has_focus = false;
         blit::Point hover_colour;
 

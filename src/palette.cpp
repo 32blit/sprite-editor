@@ -2,12 +2,21 @@
 
 using namespace blit;
 
-Palette::Palette(blit::Point draw_offset, Pen *palette) {
+Palette::Palette(blit::Point draw_offset) {
     this->draw_offset = draw_offset;
     bounds = Size(16 * (size.w + 1), 16 * (size.h + 1));
     bounds.w--;
     bounds.h--;
-    entries = palette;
+}
+
+void Palette::load(std::string filename) {
+    
+}
+
+void Palette::reset() {
+    for(auto i = 0u; i < 256; i++) {
+        entries[i] = Pen((uint8_t)i, (uint8_t)i, (uint8_t)i, 255);
+    }
 }
 
 Pen Palette::fg_pen() {
@@ -43,7 +52,7 @@ void Palette::render_help(uint32_t time) {
 
     screen.sprites->palette[1] = Pen(100, 246, 178, 255); // Green
     screen.sprite(0, Point(64 + help_labels_x, help_labels_y), SpriteTransform::R270);
-    screen.text("Set Bg", minimal_font, Point(64 + help_labels_x + line_height, help_labels_y));
+    screen.text("Replace", minimal_font, Point(64 + help_labels_x + line_height, help_labels_y));
 
     screen.sprites->palette[1] = Pen(236, 92, 181, 255); // Pink/Red
     screen.sprite(0, Point(help_labels_x, help_labels_y + line_height), SpriteTransform::R90);
@@ -51,7 +60,7 @@ void Palette::render_help(uint32_t time) {
     
     screen.sprites->palette[1] = Pen(234, 226, 81, 255); // Yellow
     screen.sprite(0, Point(64 + help_labels_x, help_labels_y + line_height), SpriteTransform::R180);
-    screen.text("Set", minimal_font, Point(64 + help_labels_x + line_height, help_labels_y + line_height));
+    screen.text("Pick Bg", minimal_font, Point(64 + help_labels_x + line_height, help_labels_y + line_height));
 
     screen.sprites->palette[1] = Pen(80, 100, 120, 255);
 }
@@ -159,7 +168,7 @@ void Palette::update(uint32_t time, Mouse *mouse) {
     hover_colour.x /= (size.w + 1);
     hover_colour.y /= (size.h + 1);
 
-    if(mouse->button_y_pressed) {
+    if(mouse->button_b_pressed) {
         selected_background_colour = hover_colour.x + hover_colour.y * 16;
     }
 
@@ -191,13 +200,12 @@ void Palette::update(uint32_t time, Mouse *mouse) {
             break;
     }
 
-    if(mouse->button_b_pressed) {
+    if(mouse->button_y_pressed) {
         entries[hover_colour.x + hover_colour.y * 16] = entries[selected_colour];
     }
     if(mouse->button_a_pressed) {
         selected_colour = hover_colour.x + hover_colour.y * 16;
     }
-    picked = mouse->button_a_pressed || mouse->button_y_pressed;
 }
 
 int Palette::add(Pen pen) {

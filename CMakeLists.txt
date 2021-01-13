@@ -8,7 +8,8 @@ set(PROJECT_SOURCE
     src/mouse.cpp
     src/menu.cpp
     src/editor.cpp
-    src/palette.cpp)
+    src/palette.cpp
+    src/file-browser.cpp)
 set(PROJECT_DISTRIBS LICENSE README.md)
 
 # Build configuration; approach this with caution!

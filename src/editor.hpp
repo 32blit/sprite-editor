@@ -5,25 +5,28 @@
 
 class Editor {
     public:
-        Editor(blit::Point draw_offset);
+        Editor(blit::Point draw_offset, Palette *palette);
         void render(uint32_t time);
         void update(uint32_t time, Mouse *mouse);
         void set_pixel(blit::Point point, uint8_t colour);
         uint8_t get_pixel(blit::Point point);
-        void set(blit::Surface *src, Palette *palette);
+        void set_palette(Palette *palette);
         blit::Surface *buffer = nullptr;
         uint8_t data[128 * 128];
-        unsigned int selected_colour = 0;
-        unsigned int selected_background_colour = 0;
 
         blit::Point current_pixel = blit::Point(0, 0);
         blit::Point current_sprite = blit::Point(0, 0);
 
-        bool picked = false;
+        blit::Point draw_offset;
+        Palette *palette;
+        void reset();
+        void load(std::string filename);
+
+        blit::Surface *temp;
+        uint8_t buf[128 * 128 * sizeof(blit::Pen)]; // Buffer for processing input images
 
     private:
         blit::Size bounds = blit::Size(128, 128);
-        blit::Point draw_offset;
         bool has_focus = false;
         blit::Vec2 view_offset = blit::Vec2(0, 0);
         int view_zoom = 1;

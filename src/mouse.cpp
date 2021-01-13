@@ -21,10 +21,10 @@ void Mouse::update(uint32_t time) {
     dpad_left = buttons & Button::DPAD_LEFT;
     dpad_right = buttons & Button::DPAD_RIGHT;
 
-    dpad_up_pressed = buttons.pressed & Button::DPAD_UP;
-    dpad_down_pressed = buttons.pressed & Button::DPAD_DOWN;
-    dpad_left_pressed = buttons.pressed & Button::DPAD_LEFT;
-    dpad_right_pressed = buttons.pressed & Button::DPAD_RIGHT;
+    dpad_up_pressed = buttons.released & Button::DPAD_UP;
+    dpad_down_pressed = buttons.released & Button::DPAD_DOWN;
+    dpad_left_pressed = buttons.released & Button::DPAD_LEFT;
+    dpad_right_pressed = buttons.released & Button::DPAD_RIGHT;
 
     button_a = buttons & Button::A;
     button_b = buttons & Button::B;
@@ -32,11 +32,11 @@ void Mouse::update(uint32_t time) {
     button_y = buttons & Button::Y;
     button_menu = buttons & Button::MENU;
 
-    button_a_pressed = buttons.pressed & Button::A;
-    button_b_pressed = buttons.pressed & Button::B;
-    button_x_pressed = buttons.pressed & Button::X;
-    button_y_pressed = buttons.pressed & Button::Y;
-    button_menu_pressed = buttons.pressed & Button::MENU;
+    button_a_pressed = buttons.released & Button::A;
+    button_b_pressed = buttons.released & Button::B;
+    button_x_pressed = buttons.released & Button::X;
+    button_y_pressed = buttons.released & Button::Y;
+    button_menu_pressed = buttons.released & Button::MENU;
 
     dpad = Vec2(0.0f, 0.0f);
     if(ar_dpad_u.next(time, buttons & Button::DPAD_UP)) dpad.y = -1.0f;
