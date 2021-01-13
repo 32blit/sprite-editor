@@ -2,7 +2,7 @@ title: Sprite Editor
 description: Sprite Editor
 author: gadetoid
 splash:
-  file: assets/no-image.png
+  file: assets/splash.png
 icon:
   file: assets/no-icon.png
 version: v0.0.1
