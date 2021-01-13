@@ -44,7 +44,3 @@ void Mouse::update(uint32_t time) {
 
     cursor += joystick;
 }
-
-Point Mouse::cursorPosition() {
-
-}

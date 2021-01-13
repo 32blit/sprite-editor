@@ -7,7 +7,6 @@ class Mouse {
         Mouse();
         void render(uint32_t time);
         void update(uint32_t time);
-        blit::Point cursorPosition();
         blit::Vec2 cursor;
         blit::Vec2 dpad;
         
