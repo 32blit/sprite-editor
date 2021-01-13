@@ -23,15 +23,13 @@ void Editor::render(uint32_t time) {
     Pen background_colour = screen.pen;
     Rect clip = Rect(draw_offset, bounds);
 
-    if(has_focus) {
-        clip.inflate(2);
-        screen.pen = Pen(255, 255, 255);
-        screen.rectangle(clip);
-        clip.deflate(1);
-        screen.pen = background_colour;
-        screen.rectangle(clip);
-        clip.deflate(1);
-    }
+    clip.inflate(2);
+    screen.pen = has_focus ? Pen(255, 255, 255) : Pen(80, 100, 120);
+    screen.rectangle(clip);
+    clip.deflate(1);
+    screen.pen = background_colour;
+    screen.rectangle(clip);
+    clip.deflate(1);
 
     screen.clip = clip;
 

@@ -51,9 +51,16 @@ void render(uint32_t time) {
     screen.sprites = icons;
 
     constexpr int help_labels_y = 128 + padding + 14 + 5;
-    int help_labels_x = padding;
+    int help_labels_x = padding - 2;
 
     screen.pen = Pen(255, 255, 255, 255);
+
+    char buf[100] = "";
+    snprintf(buf, 100, "spr:%02i:%02i  pix:%03i:%03i", editor.current_sprite.x, editor.current_sprite.y, editor.current_pixel.y, editor.current_pixel.y);
+    screen.text(buf, minimal_font, Point(15, 14 + 5), false);
+
+    snprintf(buf, 100, "#%02x%02x%02x", palette.fg_pen().r, palette.fg_pen().g, palette.fg_pen().b);
+    screen.text(buf, minimal_font, Point(screen.bounds.w - padding - 128 - 2, 14 + 5), false);
 
     screen.sprite(0, Point(help_labels_x, help_labels_y));
     screen.text("Zoom In", minimal_font, Point(help_labels_x + line_height, help_labels_y));
@@ -67,7 +74,7 @@ void render(uint32_t time) {
     screen.sprite(0, Point(64 + help_labels_x, help_labels_y + line_height), SpriteTransform::R180);
     screen.text("Paint", minimal_font, Point(64 + help_labels_x + line_height, help_labels_y + line_height));
 
-    help_labels_x = screen.bounds.w - padding - 128;
+    help_labels_x = screen.bounds.w - padding - 128  - 2;
 
     screen.sprite(0, Point(help_labels_x, help_labels_y));
     screen.text("Invert", minimal_font, Point(help_labels_x + line_height, help_labels_y));

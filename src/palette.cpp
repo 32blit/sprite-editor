@@ -22,15 +22,13 @@ void Palette::render(uint32_t time) {
     auto background_colour = screen.pen;
     Rect clip = Rect(draw_offset, bounds);
 
-    if(has_focus) {
-        clip.inflate(2);
-        screen.pen = Pen(255, 255, 255);
-        screen.rectangle(clip);
-        clip.deflate(1);
-        screen.pen = Pen(0, 0, 0);
-        screen.rectangle(clip);
-        clip.deflate(1);
-    }
+    clip.inflate(2);
+    screen.pen = has_focus ? Pen(255, 255, 255) : Pen(80, 100, 120);
+    screen.rectangle(clip);
+    clip.deflate(1);
+    screen.pen = Pen(0, 0, 0);
+    screen.rectangle(clip);
+    clip.deflate(1);
 
     Rect selected = Rect((selected_colour & 0xf) * (size.w + 1), (selected_colour >> 4) * (size.h + 1), size.w + 2, size.h + 2);
     selected.x += draw_offset.x - 1;
@@ -38,11 +36,14 @@ void Palette::render(uint32_t time) {
     screen.pen = Pen(255, 255, 255, 255);
     screen.rectangle(selected);
 
-    Rect hover = Rect(hover_colour.x * (size.w + 1), hover_colour.y * (size.h + 1), size.w + 2, size.h + 2);
-    hover.x += draw_offset.x - 1;
-    hover.y += draw_offset.y - 1;
-    screen.pen = Pen(128, 128, 128, 200);
-    screen.rectangle(hover);
+    if(has_focus) {
+        uint8_t pulse = (sinf(time / 250.0f) + 1.0f) * 64;
+        Rect hover = Rect(hover_colour.x * (size.w + 1), hover_colour.y * (size.h + 1), size.w + 2, size.h + 2);
+        hover.x += draw_offset.x - 1;
+        hover.y += draw_offset.y - 1;
+        screen.pen = Pen(255, 255, 255, 127 + pulse);
+        screen.rectangle(hover);
+    }
 
     for(auto i = 0u; i < 256; i++) {
         screen.pen = entries[i];
