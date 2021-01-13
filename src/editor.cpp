@@ -18,6 +18,11 @@ void Editor::load(std::string filename) {
     temp = Surface::load(filename, buf, sizeof(buf));
 
     if(temp) {
+        if(temp->bounds.w > 128 || temp->bounds.h > 128) {
+            if(temp->palette) delete[] temp->palette;
+            delete temp;
+            return;
+        }
         if(temp->palette) {
             uint8_t *pen = temp->data;
             for(auto y = 0u; y < buffer->bounds.h; y++) {
