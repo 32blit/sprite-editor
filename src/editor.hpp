@@ -14,6 +14,7 @@ class Editor {
         blit::Surface *buffer = nullptr;
         uint8_t data[128 * 128];
         unsigned int selected_colour = 0;
+        unsigned int selected_background_colour = 0;
 
         blit::Point current_pixel = blit::Point(0, 0);
         blit::Point current_sprite = blit::Point(0, 0);
@@ -27,4 +28,7 @@ class Editor {
         blit::Vec2 view_offset = blit::Vec2(0, 0);
         int view_zoom = 1;
 
+        void render_help(uint32_t time);
+        void render_status(uint32_t time);
+        void render_preview(uint32_t time);
 };

@@ -18,9 +18,50 @@ Pen Palette::bg_pen() {
     return entries[selected_background_colour];
 }
 
+
+void Palette::render_status(uint32_t time) {
+    constexpr int padding = 17;
+    screen.pen = Pen(255, 255, 255, 255);
+
+    char buf[100] = "";
+
+    snprintf(buf, 100, "FG #%02x%02x%02x BG #%02x%02x%02x", fg_pen().r, fg_pen().g, fg_pen().b, bg_pen().r, bg_pen().g, bg_pen().b);
+    screen.text(buf, minimal_font, Point(draw_offset.x - 2, 14 + 5), false);
+}
+
+void Palette::render_help(uint32_t time) {
+    constexpr int line_height = 12;
+
+    int help_labels_y = draw_offset.y + bounds.h + 5;
+    int help_labels_x = draw_offset.x - 2;
+
+    screen.pen = Pen(255, 255, 255, 255);
+
+    screen.sprites->palette[1] = Pen(99, 175, 227, 255); // Blue
+    screen.sprite(0, Point(help_labels_x, help_labels_y));
+    screen.text("Invert", minimal_font, Point(help_labels_x + line_height, help_labels_y));
+
+    screen.sprites->palette[1] = Pen(100, 246, 178, 255); // Green
+    screen.sprite(0, Point(64 + help_labels_x, help_labels_y), SpriteTransform::R270);
+    screen.text("Set Bg", minimal_font, Point(64 + help_labels_x + line_height, help_labels_y));
+
+    screen.sprites->palette[1] = Pen(236, 92, 181, 255); // Pink/Red
+    screen.sprite(0, Point(help_labels_x, help_labels_y + line_height), SpriteTransform::R90);
+    screen.text("Pick", minimal_font, Point(help_labels_x + line_height, help_labels_y + line_height));
+    
+    screen.sprites->palette[1] = Pen(234, 226, 81, 255); // Yellow
+    screen.sprite(0, Point(64 + help_labels_x, help_labels_y + line_height), SpriteTransform::R180);
+    screen.text("Set", minimal_font, Point(64 + help_labels_x + line_height, help_labels_y + line_height));
+
+    screen.sprites->palette[1] = Pen(80, 100, 120, 255);
+}
+
 void Palette::render(uint32_t time) {
     auto background_colour = screen.pen;
     Rect clip = Rect(draw_offset, bounds);
+
+    render_status(time);
+    render_help(time);
 
     clip.inflate(2);
     screen.pen = has_focus ? Pen(255, 255, 255) : Pen(80, 100, 120);
@@ -88,7 +129,7 @@ void Palette::render(uint32_t time) {
                 screen.rectangle(bar_rect);
             }
             bar_rect.deflate(1);
-            screen.pen = background_colour;
+            screen.pen = Pen(0, 0, 0, 255);
             screen.rectangle(bar_rect);
 
             bar_rect.deflate(2);
@@ -156,7 +197,7 @@ void Palette::update(uint32_t time, Mouse *mouse) {
     if(mouse->button_a_pressed) {
         selected_colour = hover_colour.x + hover_colour.y * 16;
     }
-    picked = mouse->button_a_pressed;
+    picked = mouse->button_a_pressed || mouse->button_y_pressed;
 }
 
 int Palette::add(Pen pen) {

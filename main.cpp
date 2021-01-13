@@ -5,6 +5,8 @@
 
 using namespace blit;
 
+Screen currentscreen = Screen::Edit;
+
 Mouse mouse;
 Editor editor(Point(17, 14 + 17));
 Palette palette(Point(175, 14 + 17), editor.buffer->palette);
@@ -26,10 +28,12 @@ void init() {
     }
 
     screen.sprites = icons = Surface::load(icon_sprites);
+    icons->palette[1] = Pen(255, 255, 255, 255);
 }
 
 void render(uint32_t time) {
-    screen.pen = palette.bg_pen();
+    screen.sprites = icons;
+    screen.pen = Pen(0, 0, 0, 0);
     screen.pen.a = 255;
     screen.clear();
 
@@ -37,70 +41,57 @@ void render(uint32_t time) {
     screen.mask = nullptr;
     screen.pen = Pen(255, 255, 255);
     screen.rectangle(Rect(0, 0, 320, 14));
-    screen.pen = Pen(0, 0, 0);
-    screen.text("32blit Sprite Editor", minimal_font, Point(5, 4));
+    screen.pen = Pen(0, 0, 0); 
+    switch(currentscreen) {
+        case Screen::Edit:
+            screen.text("32blit Sprite Editor", minimal_font, Point(5, 4));
+            break;
+        case Screen::Menu:
+            screen.text("Menu", minimal_font, Point(5, 4));
+            break;
+        case Screen::SavePalette:
+            screen.text("Save Palette", minimal_font, Point(5, 4));
+            break;
+        case Screen::SaveSprites:
+            screen.text("Save Sprites", minimal_font, Point(5, 4));
+            break;
+        case Screen::LoadPalette:
+            screen.text("Load Palette", minimal_font, Point(5, 4));
+            break;
+        case Screen::LoadSprites:
+            screen.text("Load Sprites", minimal_font, Point(5, 4));
+            break;
+    }
 
-    screen.pen = palette.bg_pen();
-    screen.pen.a = 255;
-    editor.render(time);
-    palette.render(time);
-
-    constexpr int line_height = 12;
-    constexpr int padding = 17;
-
-    screen.sprites = icons;
-
-    constexpr int help_labels_y = 128 + padding + 14 + 5;
-    int help_labels_x = padding - 2;
-
-    screen.pen = Pen(255, 255, 255, 255);
-
-    char buf[100] = "";
-    snprintf(buf, 100, "spr:%02i:%02i  pix:%03i:%03i", editor.current_sprite.x, editor.current_sprite.y, editor.current_pixel.y, editor.current_pixel.y);
-    screen.text(buf, minimal_font, Point(15, 14 + 5), false);
-
-    snprintf(buf, 100, "#%02x%02x%02x", palette.fg_pen().r, palette.fg_pen().g, palette.fg_pen().b);
-    screen.text(buf, minimal_font, Point(screen.bounds.w - padding - 128 - 2, 14 + 5), false);
-
-    screen.sprite(0, Point(help_labels_x, help_labels_y));
-    screen.text("Zoom In", minimal_font, Point(help_labels_x + line_height, help_labels_y));
-
-    screen.sprite(0, Point(64 + help_labels_x, help_labels_y), SpriteTransform::R270);
-    screen.text("Zoom Out", minimal_font, Point(64 + help_labels_x + line_height, help_labels_y));
-
-    screen.sprite(0, Point(help_labels_x, help_labels_y + line_height), SpriteTransform::R90);
-    screen.text("Pick", minimal_font, Point(help_labels_x + line_height, help_labels_y + line_height));
-
-    screen.sprite(0, Point(64 + help_labels_x, help_labels_y + line_height), SpriteTransform::R180);
-    screen.text("Paint", minimal_font, Point(64 + help_labels_x + line_height, help_labels_y + line_height));
-
-    help_labels_x = screen.bounds.w - padding - 128  - 2;
-
-    screen.sprite(0, Point(help_labels_x, help_labels_y));
-    screen.text("Invert", minimal_font, Point(help_labels_x + line_height, help_labels_y));
-
-    screen.sprite(0, Point(64 + help_labels_x, help_labels_y), SpriteTransform::R270);
-    screen.text("Set Bg", minimal_font, Point(64 + help_labels_x + line_height, help_labels_y));
-
-    screen.sprite(0, Point(help_labels_x, help_labels_y + line_height), SpriteTransform::R90);
-    screen.text("Pick", minimal_font, Point(help_labels_x + line_height, help_labels_y + line_height));
-
-    screen.sprite(0, Point(64 + help_labels_x, help_labels_y + line_height), SpriteTransform::R180);
-    screen.text("Set", minimal_font, Point(64 + help_labels_x + line_height, help_labels_y + line_height));
-
-
-    screen.stretch_blit(editor.buffer, Rect(editor.current_sprite * 8, Size(8, 8)), Rect(padding, 240 - 32 - padding, 32, 32));
-    screen.stretch_blit(editor.buffer, Rect(editor.current_sprite * 8, Size(8, 8)), Rect(padding + 32 + 10, 240 - 32 - padding, 16, 16));
-    screen.stretch_blit(editor.buffer, Rect(editor.current_sprite * 8, Size(8, 8)), Rect(padding + 32 + 10 + 16 + 10, 240 - 32 - padding, 8, 8));
-
-    mouse.render(time);
+    if(currentscreen == Screen::Edit) {
+        editor.render(time);
+        palette.render(time);
+        mouse.render(time);
+    }
 }
 
 void update(uint32_t time) {
     mouse.update(time);
-    editor.update(time, &mouse);
-    palette.update(time, &mouse);
 
-    if(palette.picked) editor.selected_colour = palette.selected_colour;
-    if(editor.picked) palette.selected_colour = editor.selected_colour;
+    if(mouse.button_menu_pressed) {
+        switch(currentscreen) {
+            case Screen::Edit:
+                currentscreen = Screen::Menu;
+                break;
+            case Screen::Menu:
+                currentscreen = Screen::Edit;
+                break;
+        }
+    }
+
+    if(currentscreen == Screen::Edit) {
+        editor.update(time, &mouse);
+        palette.update(time, &mouse);
+
+        if(palette.picked) {
+            editor.selected_colour = palette.selected_colour;
+            editor.selected_background_colour = palette.selected_background_colour;
+        }
+        if(editor.picked) palette.selected_colour = editor.selected_colour;
+    }
 }

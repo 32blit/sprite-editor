@@ -19,9 +19,69 @@ uint8_t Editor::get_pixel(Point point) {
     return data[point.x + point.y * 128];
 }
 
+void Editor::render_status(uint32_t time) {
+    screen.pen = Pen(255, 255, 255, 255);
+
+    char buf[100] = "";
+    snprintf(buf, 100, "spr:%02i:%02i  pix:%03i:%03i", current_sprite.x, current_sprite.y, current_pixel.x, current_pixel.y);
+    screen.text(buf, minimal_font, Point(15, 14 + 5), false);
+}
+
+void Editor::render_help(uint32_t time) {
+    constexpr int line_height = 12;
+
+    int help_labels_y = draw_offset.y + bounds.h + 5;
+    int help_labels_x = draw_offset.x - 2;
+
+    screen.pen = Pen(255, 255, 255, 255);
+
+    screen.sprites->palette[1] = Pen(99, 175, 227, 255); // Blue
+    screen.sprite(0, Point(help_labels_x, help_labels_y));
+    screen.text("Zoom In", minimal_font, Point(help_labels_x + line_height, help_labels_y));
+
+    screen.sprites->palette[1] = Pen(100, 246, 178, 255); // Green
+    screen.sprite(0, Point(64 + help_labels_x, help_labels_y), SpriteTransform::R270);
+    screen.text("Zoom Out", minimal_font, Point(64 + help_labels_x + line_height, help_labels_y));
+
+    screen.sprites->palette[1] = Pen(236, 92, 181, 255); // Pink/Red
+    screen.sprite(0, Point(help_labels_x, help_labels_y + line_height), SpriteTransform::R90);
+    screen.text("Pick", minimal_font, Point(help_labels_x + line_height, help_labels_y + line_height));
+
+    screen.sprites->palette[1] = Pen(234, 226, 81, 255); // Yellow
+    screen.sprite(0, Point(64 + help_labels_x, help_labels_y + line_height), SpriteTransform::R180);
+    screen.text("Paint", minimal_font, Point(64 + help_labels_x + line_height, help_labels_y + line_height));
+
+    screen.sprites->palette[1] = Pen(80, 100, 120, 255);
+}
+
+void Editor::render_preview(uint32_t time) {
+    Pen preview_bg = buffer->palette[selected_background_colour];
+
+    constexpr int padding = 17;
+
+    screen.pen = preview_bg;
+    screen.pen.a = 255;
+
+    Rect preview = Rect(draw_offset.x, 240 - 32 - padding, bounds.w, 32);
+    preview.inflate(2);
+    screen.rectangle(preview);
+
+    screen.stretch_blit(buffer, Rect(current_sprite * 8, Size(8, 8)), Rect(padding, 240 - 32 - padding, 32, 32));
+    screen.stretch_blit(buffer, Rect(current_sprite * 8, Size(8, 8)), Rect(padding + 32 + 10, 240 - 32 - padding, 16, 16));
+    screen.stretch_blit(buffer, Rect(current_sprite * 8, Size(8, 8)), Rect(padding + 32 + 10 + 16 + 10, 240 - 32 - padding, 8, 8));
+
+    Point anim_sprite = current_sprite;
+    anim_sprite.x = (time / 200) & 0x0f;
+    screen.stretch_blit(buffer, Rect(anim_sprite * 8, Size(8, 8)), Rect(padding + 32 + 10 + 16 + 10 + 8 + 10, 240 - 32 - padding, 32, 32));
+}
+
 void Editor::render(uint32_t time) {
     Pen background_colour = screen.pen;
     Rect clip = Rect(draw_offset, bounds);
+
+    render_status(time);
+    render_help(time);
+    render_preview(time);
 
     clip.inflate(2);
     screen.pen = has_focus ? Pen(255, 255, 255) : Pen(80, 100, 120);
@@ -72,6 +132,16 @@ void Editor::render(uint32_t time) {
         screen.pen.a = 255 - pulse;
         cursor.deflate(1);
         screen.rectangle(cursor);
+
+        if(view_zoom < 16) {
+            screen.pen = Pen(128, 128, 128, 255);
+            screen.pen.a = 255;
+            cursor = Rect(draw_offset + (((current_sprite * 8) - view_offset) * view_zoom), Size(8 * view_zoom, 8 * view_zoom));
+            screen.line(cursor.tl(), cursor.tr());
+            screen.line(cursor.bl(), cursor.br());
+            screen.line(cursor.tl(), cursor.bl());
+            screen.line(cursor.tr(), cursor.br());
+        }
     }
 
     screen.clip = Rect(Point(0, 0), screen.bounds);

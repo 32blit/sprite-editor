@@ -26,4 +26,7 @@ class Palette {
 
         int selected_channel = 0;
 
+        void render_help(uint32_t time);
+        void render_status(uint32_t time);
+
 };

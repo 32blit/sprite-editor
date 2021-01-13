@@ -30,11 +30,13 @@ void Mouse::update(uint32_t time) {
     button_b = buttons & Button::B;
     button_x = buttons & Button::X;
     button_y = buttons & Button::Y;
+    button_menu = buttons & Button::MENU;
 
     button_a_pressed = buttons.pressed & Button::A;
     button_b_pressed = buttons.pressed & Button::B;
     button_x_pressed = buttons.pressed & Button::X;
     button_y_pressed = buttons.pressed & Button::Y;
+    button_menu_pressed = buttons.pressed & Button::MENU;
 
     dpad = Vec2(0.0f, 0.0f);
     if(ar_dpad_u.next(time, buttons & Button::DPAD_UP)) dpad.y = -1.0f;
