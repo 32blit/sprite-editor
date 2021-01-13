@@ -37,10 +37,10 @@ void Mouse::update(uint32_t time) {
     button_y_pressed = buttons.pressed & Button::Y;
 
     dpad = Vec2(0.0f, 0.0f);
-    if(buttons & Button::DPAD_UP) dpad.y = -1.0f;
-    if(buttons & Button::DPAD_DOWN) dpad.y = 1.0f;
-    if(buttons & Button::DPAD_LEFT) dpad.x = -1.0f;
-    if(buttons & Button::DPAD_RIGHT) dpad.x = 1.0f;
+    if(ar_dpad_u.next(time, buttons & Button::DPAD_UP)) dpad.y = -1.0f;
+    if(ar_dpad_d.next(time, buttons & Button::DPAD_DOWN)) dpad.y = 1.0f;
+    if(ar_dpad_l.next(time, buttons & Button::DPAD_LEFT)) dpad.x = -1.0f;
+    if(ar_dpad_r.next(time, buttons & Button::DPAD_RIGHT)) dpad.x = 1.0f;
 
     cursor += joystick;
 }

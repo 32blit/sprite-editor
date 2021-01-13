@@ -121,15 +121,9 @@ void Palette::update(uint32_t time, Mouse *mouse) {
         selected_background_colour = hover_colour.x + hover_colour.y * 16;
     }
 
-    if(mouse->dpad_down_pressed) {
-        selected_channel++;
-        if(selected_channel > 3) selected_channel = 0;
-    }
-
-    if(mouse->dpad_up_pressed) {
-        selected_channel--;
-        if(selected_channel < 0) selected_channel = 3;
-    }
+    selected_channel += mouse->dpad.y;
+    if(selected_channel > 3) selected_channel = 0;
+    if(selected_channel < 0) selected_channel = 3;
 
     if(mouse->button_x_pressed) {
         Pen current = entries[selected_colour];
@@ -138,23 +132,19 @@ void Palette::update(uint32_t time, Mouse *mouse) {
 
     switch(selected_channel){
         case 0: // red
-            if(mouse->dpad_right_pressed) entries[selected_colour].r += 8;
-            if(mouse->dpad_left_pressed) entries[selected_colour].r -= 8;
+            entries[selected_colour].r += mouse->dpad.x * 8;
             entries[selected_colour].r = (int)(entries[selected_colour].r / 8) * 8;
             break;
         case 1: // green
-            if(mouse->dpad_right_pressed) entries[selected_colour].g += 4;
-            if(mouse->dpad_left_pressed) entries[selected_colour].g -= 4;
+            entries[selected_colour].g += mouse->dpad.x * 4;
             entries[selected_colour].g = (int)(entries[selected_colour].g / 4) * 4;
             break;
         case 2: // blue
-            if(mouse->dpad_right_pressed) entries[selected_colour].b += 8;
-            if(mouse->dpad_left_pressed) entries[selected_colour].b -= 8;
+            entries[selected_colour].b += mouse->dpad.x * 8;
             entries[selected_colour].b = (int)(entries[selected_colour].b / 8) * 8;
             break;
         case 3: // alpha
-            if(mouse->dpad_right_pressed) entries[selected_colour].a += 8;
-            if(mouse->dpad_left_pressed) entries[selected_colour].a -= 8;
+            entries[selected_colour].a += mouse->dpad.x * 8;
             entries[selected_colour].a = (int)(entries[selected_colour].a / 8) * 8;
             break;
     }
