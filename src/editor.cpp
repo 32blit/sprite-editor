@@ -64,7 +64,7 @@ void Editor::update(uint32_t time, Mouse *mouse) {
     if(mouse->button_y_pressed && view_zoom > 1) view_zoom >>= 1;
     if(mouse->button_x_pressed && view_zoom < 16) view_zoom <<= 1;
 
-    view_offset += mouse->dpad / view_zoom;
+    view_offset += mouse->dpad / float(view_zoom);
     if(view_offset.x < 0) view_offset.x = 0;
     if(view_offset.y < 0) view_offset.y = 0;
 
