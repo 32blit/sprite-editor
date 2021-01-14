@@ -7,6 +7,8 @@
 
 #include "engine/file.hpp"
 #include "engine/menu.hpp"
+#include "mouse.hpp"
+
 
 class FileBrowser final : public blit::Menu {
 public:

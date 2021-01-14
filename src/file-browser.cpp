@@ -1,12 +1,10 @@
 #include "file-browser.hpp"
 
 #include "engine/engine.hpp"
+#include "control-icons.hpp"
 
 FileBrowser::FileBrowser(const blit::Font &font) : Menu("", nullptr, 0, font) {
-    // too early
-    //files = blit::list_files("");
-
-    item_h = font.char_h + 2;
+    item_h = font.char_h + 6;
     item_adjust_y = 0;
 
     header_h = item_h;
@@ -39,10 +37,10 @@ void FileBrowser::render()
 
     // back icon
     if(!cur_dir.empty()) {
-        blit::Point iconOffset(-(backTextWidth + iconSize + 2), 1); // from the top-right
+        blit::Point iconOffset(-(backTextWidth + iconSize + 2), (item_h - iconSize) / 2); // from the top-right
 
         blit::screen.text("Back", font, r, true, blit::TextAlign::center_right);
-        //controlIcons.render(ControlIcons::Icon::B, r.tr() + iconOffset, header_foreground, iconSize);
+        control_icon(r.tr() + iconOffset, blit::Button::B);
     }
 }
 
@@ -119,8 +117,8 @@ void FileBrowser::render_item(const Item &item, int y, int index) const {
         const int iconSize = font.char_h > 8 ? 12 : 8;
 
         blit::Rect r(display_rect.x + item_padding_x, y, display_rect.w - item_padding_x * 2 - iconSize - 2, item_h);
-        blit::Point iconPos = blit::Point(display_rect.x + display_rect.w - item_padding_x -iconSize, y + 1); // from the top-right
-        //controlIcons.render(ControlIcons::Icon::A, iconPos, foreground_colour, iconSize);
+        blit::Point iconPos = blit::Point(display_rect.x + display_rect.w - item_padding_x -iconSize, y + ((item_h - iconSize) / 2)); // from the top-right
+        control_icon(iconPos, blit::Button::A);
     }
 }
 

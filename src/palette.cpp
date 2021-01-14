@@ -1,4 +1,5 @@
 #include "palette.hpp"
+#include "control-icons.hpp"
 
 using namespace blit;
 
@@ -41,31 +42,27 @@ void Palette::render_status(uint32_t time) {
 void Palette::render_help(uint32_t time) {
     constexpr int line_height = 12;
 
-    int help_labels_y = draw_offset.y + bounds.h + 5;
-    int help_labels_x = draw_offset.x - 2;
+    Point help_offset(draw_offset.x - 2, draw_offset.y + bounds.h + 5);
+
+    screen.pen = Pen(0, 0, 0, 255);
+    screen.rectangle(Rect(help_offset, Size(bounds.w + 4, 32)));
 
     screen.pen = Pen(255, 255, 255, 255);
 
-    screen.sprites->palette[1] = Pen(99, 175, 227, 255); // Blue
-    screen.sprite(0, Point(help_labels_x, help_labels_y));
-    screen.text("Invert", minimal_font, Point(help_labels_x + line_height, help_labels_y));
+    control_icon(help_offset, Button::X);
+    screen.text("Invert", minimal_font, Point(help_offset.x + line_height, help_offset.y));
 
-    screen.sprites->palette[1] = Pen(100, 246, 178, 255); // Green
-    screen.sprite(0, Point(64 + help_labels_x, help_labels_y), SpriteTransform::R270);
-    screen.text("Replace", minimal_font, Point(64 + help_labels_x + line_height, help_labels_y));
+    control_icon(help_offset + Point(64, 0), Button::Y);
+    screen.text("Replace", minimal_font, help_offset + Point(64 + line_height, 0));
 
-    screen.sprites->palette[1] = Pen(236, 92, 181, 255); // Pink/Red
-    screen.sprite(0, Point(help_labels_x, help_labels_y + line_height), SpriteTransform::R90);
-    screen.text("Pick", minimal_font, Point(help_labels_x + line_height, help_labels_y + line_height));
-    
-    screen.sprites->palette[1] = Pen(234, 226, 81, 255); // Yellow
-    screen.sprite(0, Point(64 + help_labels_x, help_labels_y + line_height), SpriteTransform::R180);
-    screen.text("Pick Bg", minimal_font, Point(64 + help_labels_x + line_height, help_labels_y + line_height));
+    control_icon(help_offset + Point(0, line_height), Button::A);
+    screen.text("Pick", minimal_font, help_offset + Point(line_height, line_height));
 
-    screen.sprites->palette[1] = Pen(80, 100, 120, 255);
+    control_icon(Point(64 + help_offset.x, help_offset.y + line_height), Button::B);
+    screen.text("Pick BG", minimal_font, help_offset + Point(line_height + 64, line_height));
 }
 
-void Palette::render(uint32_t time) {
+void Palette::render(uint32_t time, Mouse *mouse) {
     auto background_colour = screen.pen;
     Rect clip = Rect(draw_offset, bounds);
 
@@ -150,10 +147,16 @@ void Palette::render(uint32_t time) {
         }
     }
 
+    Point ei = draw_offset - Point(14, 0);
+    for(auto &i : tool_icons) {
+        ui_icon(&i, ei, mouse);
+        ei.y += 12;
+    }
+
     screen.pen = background_colour;
 }
 
-void Palette::update(uint32_t time, Mouse *mouse) {
+int Palette::update(uint32_t time, Mouse *mouse) {
     Rect highlight = Rect(draw_offset, bounds);
     if (highlight.contains(mouse->cursor)) {
         has_focus = true;
@@ -161,7 +164,18 @@ void Palette::update(uint32_t time, Mouse *mouse) {
         has_focus = false;
     }
 
-    if(!has_focus) return;
+    if(!has_focus){
+        if(mouse->button_a_pressed) {
+            Point ei = draw_offset - Point(14, 0);
+            for(auto &i : tool_icons) {
+                if(icon_bounds(ei).contains(mouse->cursor)) {
+                    return i.index;
+                }
+                ei.y += 12;
+            }
+        }
+        return -1;
+    }
 
     Point cursor = mouse->cursor - draw_offset;
     hover_colour = cursor;
@@ -206,6 +220,7 @@ void Palette::update(uint32_t time, Mouse *mouse) {
     if(mouse->button_a_pressed) {
         selected_colour = hover_colour.x + hover_colour.y * 16;
     }
+    return -1;
 }
 
 int Palette::add(Pen pen) {

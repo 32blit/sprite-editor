@@ -9,7 +9,8 @@ set(PROJECT_SOURCE
     src/menu.cpp
     src/editor.cpp
     src/palette.cpp
-    src/file-browser.cpp)
+    src/file-browser.cpp
+    src/control-icons.cpp)
 set(PROJECT_DISTRIBS LICENSE README.md)
 
 # Build configuration; approach this with caution!

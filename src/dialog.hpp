@@ -2,6 +2,7 @@
 
 #include "engine/engine.hpp"
 #include "mouse.hpp"
+#include "control-icons.hpp"
 
 struct Dialog {
   std::string title, message;
@@ -43,30 +44,6 @@ struct Dialog {
     return true;
   }
 
-  void button_icon(const blit::Point &pos, int button) {
-    switch(button) {
-        case blit::Button::A:
-            blit::screen.sprites->palette[1] = blit::Pen(236, 92, 181, 255); // Pink/Red
-            blit::screen.sprite(0, pos, blit::SpriteTransform::R90);
-            break;
-        case blit::Button::B:
-            blit::screen.sprites->palette[1] = blit::Pen(234, 226, 81, 255); // Yellow
-            blit::screen.sprite(0, pos, blit::SpriteTransform::R180);
-            break;
-        case blit::Button::X:
-            blit::screen.sprites->palette[1] = blit::Pen(100, 246, 178, 255); // Green
-            blit::screen.sprite(0, pos);
-            break;
-        case blit::Button::Y:
-            blit::screen.sprites->palette[1] = blit::Pen(99, 175, 227, 255); // Blue
-            blit::screen.sprite(0, pos, blit::SpriteTransform::R270);
-            break;
-    }
-
-    blit::screen.sprites->palette[1] = blit::Pen(80, 100, 120, 255);
-
-  }
-
   void draw(Mouse *mouse) {
     if(title.empty())
       return;
@@ -96,8 +73,8 @@ struct Dialog {
 
     blit::screen.text("No      Yes    ", blit::minimal_font, blit::Rect(dialog_rect.x + 1, dialog_rect.y + dialog_rect.h - 17, dialog_rect.w - 2, 16 + blit::minimal_font.spacing_y), true, blit::TextAlign::center_right);
 
-    button_icon(blit::Point(dialog_rect.x + 185, dialog_rect.y + 71), blit::Button::Y);
-    button_icon(blit::Point(dialog_rect.x + 218, dialog_rect.y + 71), blit::Button::X);
+    control_icon(blit::Point(dialog_rect.x + 185, dialog_rect.y + 71), blit::Button::Y);
+    control_icon(blit::Point(dialog_rect.x + 218, dialog_rect.y + 71), blit::Button::X);
   }
 
 };

@@ -16,21 +16,21 @@ void Mouse::render(uint32_t time) {
 }
 
 void Mouse::update(uint32_t time) {
-    dpad_up = buttons & Button::DPAD_UP;
-    dpad_down = buttons & Button::DPAD_DOWN;
-    dpad_left = buttons & Button::DPAD_LEFT;
-    dpad_right = buttons & Button::DPAD_RIGHT;
+    dpad_up = buttons.state & Button::DPAD_UP;
+    dpad_down = buttons.state & Button::DPAD_DOWN;
+    dpad_left = buttons.state & Button::DPAD_LEFT;
+    dpad_right = buttons.state & Button::DPAD_RIGHT;
 
     dpad_up_pressed = buttons.released & Button::DPAD_UP;
     dpad_down_pressed = buttons.released & Button::DPAD_DOWN;
     dpad_left_pressed = buttons.released & Button::DPAD_LEFT;
     dpad_right_pressed = buttons.released & Button::DPAD_RIGHT;
 
-    button_a = buttons & Button::A;
-    button_b = buttons & Button::B;
-    button_x = buttons & Button::X;
-    button_y = buttons & Button::Y;
-    button_menu = buttons & Button::MENU;
+    button_a = buttons.state & Button::A;
+    button_b = buttons.state & Button::B;
+    button_x = buttons.state & Button::X;
+    button_y = buttons.state & Button::Y;
+    button_menu = buttons.state & Button::MENU;
 
     button_a_pressed = buttons.released & Button::A;
     button_b_pressed = buttons.released & Button::B;
@@ -45,4 +45,8 @@ void Mouse::update(uint32_t time) {
     if(ar_dpad_r.next(time, buttons & Button::DPAD_RIGHT)) dpad.x = 1.0f;
 
     cursor += joystick;
+    if(cursor.x < 0) cursor.x = 0;
+    if(cursor.x >= screen.bounds.w) cursor.x = screen.bounds.w - 1;
+    if(cursor.y < 0) cursor.y = 0;
+    if(cursor.y >= screen.bounds.h) cursor.y = screen.bounds.h - 1;
 }
