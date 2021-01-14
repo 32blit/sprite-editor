@@ -2,23 +2,24 @@
 
 using namespace blit;
 
+
 void control_icon(Point location, Button button) {
     auto temp = screen.sprites->palette[1];
     switch(button){
         case Button::Y:
-            screen.sprites->palette[1] = Pen(100, 246, 178, 255); // Green
+            screen.sprites->palette[1] = BTN_GREEN; // Green
             screen.sprite(0, location, SpriteTransform::R270);
             break;
         case Button::X:
-            screen.sprites->palette[1] = Pen(99, 175, 227, 255); // Blue
+            screen.sprites->palette[1] = BTN_BLUE; // Blue
             screen.sprite(0, location);
             break;
         case Button::A:
-            screen.sprites->palette[1] = Pen(236, 92, 181, 255); // Pink/Red
+            screen.sprites->palette[1] = BTN_PINK; // Pink/Red
             screen.sprite(0, location, SpriteTransform::R90);
             break;
         case Button::B:
-            screen.sprites->palette[1] = Pen(234, 226, 81, 255); // Yellow
+            screen.sprites->palette[1] = BTN_YELLOW; // Yellow
             screen.sprite(0, location, SpriteTransform::R180);
             break;
         default:
@@ -49,7 +50,7 @@ void ui_icon(UIcon *i, Point position, Mouse *mouse, bool active) {
         label_bg.x += 2;
         label_bg.w += 1;
         screen.rectangle(label_bg);
-        screen.pen = Pen(255, 255, 255, 255);
+        screen.pen = active ? Pen(255, 128, 128, 255) : Pen(255, 255, 255, 255);
         screen.text(i->help, minimal_font, box.tr() + Point(3, 1));
     }
 }

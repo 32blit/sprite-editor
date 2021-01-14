@@ -6,7 +6,8 @@
 
 enum class EditMode {
   Pixel,
-  Sprite
+  Sprite,
+  Animate
 };
 
 class Editor {
@@ -28,6 +29,9 @@ class Editor {
         blit::Point current_pixel = blit::Point(0, 0);
         blit::Point current_sprite = blit::Point(0, 0);
 
+        blit::Point anim_start = blit::Point(0, 0);
+        blit::Point anim_end = blit::Point(15, 0);
+
         blit::Point draw_offset;
         Palette *palette;
     
@@ -47,7 +51,8 @@ class Editor {
             UIcon{1, "save", 3},
             UIcon{2, "clear", 2},
             UIcon{3, "pixel", 9},
-            UIcon{4, "sprite", 10}
+            UIcon{4, "sprite", 10},
+            UIcon{5, "animate", 1}
         };
 
     private:
@@ -59,4 +64,5 @@ class Editor {
         void render_help(uint32_t time);
         void render_status(uint32_t time);
         void render_preview(uint32_t time);
+        void outline_rect(blit::Rect cursor);
 };

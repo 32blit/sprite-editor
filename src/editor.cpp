@@ -94,10 +94,22 @@ void Editor::render_help(uint32_t time) {
     screen.text("Zoom Out", minimal_font, help_offset + Point(64 + line_height, 0));
 
     control_icon(help_offset + Point(0, line_height), Button::A);
-    screen.text(mode == EditMode::Pixel ? "Pick" : clipboard ? "Done" : "Copy", minimal_font, help_offset + Point(line_height, line_height));
-
     control_icon(Point(64 + help_offset.x, help_offset.y + line_height), Button::B);
-    screen.text(mode == EditMode::Pixel ? "Paint" : clipboard ? "Paste" : "Rotate", minimal_font, help_offset + Point(line_height + 64, line_height));
+    switch(mode) {
+        case EditMode::Pixel:
+            screen.text("Pick", minimal_font, help_offset + Point(line_height, line_height));
+            screen.text("Paint", minimal_font, help_offset + Point(line_height + 64, line_height));
+            break;
+        case EditMode::Sprite:
+            screen.text(clipboard ? "Done" : "Copy", minimal_font, help_offset + Point(line_height, line_height));
+            screen.text(clipboard ? "Paste" : "Rotate", minimal_font, help_offset + Point(line_height + 64, line_height));
+            break;
+        case EditMode::Animate:
+            screen.text("Start", minimal_font, help_offset + Point(line_height, line_height));
+            screen.text("End", minimal_font, help_offset + Point(line_height + 64, line_height));
+            break;
+    }
+
 }
 
 void Editor::render_preview(uint32_t time) {
@@ -116,9 +128,24 @@ void Editor::render_preview(uint32_t time) {
     screen.stretch_blit(&buffer, Rect(current_sprite * 8, Size(8, 8)), Rect(padding + 32 + 10, 240 - 32 - padding, 16, 16));
     screen.stretch_blit(&buffer, Rect(current_sprite * 8, Size(8, 8)), Rect(padding + 32 + 10 + 16 + 10, 240 - 32 - padding, 8, 8));
 
-    Point anim_sprite = current_sprite;
-    anim_sprite.x = (time / 200) & 0x0f;
+    Point anim_sprite = anim_start;
+    Point anim_range = (anim_end - anim_start) + Point(1, 1);
+
+    if(anim_range.x < 1 || anim_range.y < 1) return;
+
+    int anim_step = (time / 200) % (anim_range.x * anim_range.y);
+
+    anim_sprite.x += anim_step % anim_range.x;
+    anim_sprite.y += anim_step / anim_range.x;
+
     screen.stretch_blit(&buffer, Rect(anim_sprite * 8, Size(8, 8)), Rect(padding + 32 + 10 + 16 + 10 + 8 + 10, 240 - 32 - padding, 32, 32));
+}
+
+void Editor::outline_rect(Rect cursor) {
+    screen.line(cursor.tl(), cursor.tr());
+    screen.line(cursor.bl(), cursor.br());
+    screen.line(cursor.tl(), cursor.bl());
+    screen.line(cursor.tr(), cursor.br());
 }
 
 void Editor::render(uint32_t time, Mouse *mouse) {
@@ -150,7 +177,6 @@ void Editor::render(uint32_t time, Mouse *mouse) {
         display_offset.y = fabs(viewport_tl.y);
         viewport_tl.y = 0;
     }
-
 
     Vec2 viewport_bounds(buffer.bounds.w, buffer.bounds.h);
     viewport_bounds /= view_zoom;
@@ -184,12 +210,16 @@ void Editor::render(uint32_t time, Mouse *mouse) {
         // sprite cursor
         if(view_zoom < 16) {
             screen.pen = Pen(128, 128, 128, 255);
-            screen.pen.a = 255;
             cursor = Rect(draw_offset + (((current_sprite * 8) - view_offset) * view_zoom), Size(8 * view_zoom, 8 * view_zoom));
-            screen.line(cursor.tl(), cursor.tr());
-            screen.line(cursor.bl(), cursor.br());
-            screen.line(cursor.tl(), cursor.bl());
-            screen.line(cursor.tr(), cursor.br());
+            outline_rect(cursor);
+
+            screen.pen = Pen(64, 128, 64, 255);
+            cursor = Rect(draw_offset + (((anim_start * 8) - view_offset) * view_zoom), Size(8 * view_zoom, 8 * view_zoom));
+            outline_rect(cursor);
+
+            screen.pen = Pen(128, 64, 64, 255);
+            cursor = Rect(draw_offset + (((anim_end * 8) - view_offset) * view_zoom), Size(8 * view_zoom, 8 * view_zoom));
+            outline_rect(cursor);
         }
     }
 
@@ -197,7 +227,7 @@ void Editor::render(uint32_t time, Mouse *mouse) {
 
     Point ei = draw_offset - Point(14, 0);
     for(auto &i : tool_icons) {
-        bool active = (i.sprite == 9 && mode == EditMode::Pixel) || (i.sprite == 10 && mode == EditMode::Sprite);
+        bool active = (i.sprite == 9 && mode == EditMode::Pixel) || (i.sprite == 10 && mode == EditMode::Sprite) || (i.sprite == 1 && mode == EditMode::Animate);
         ui_icon(&i, ei, mouse, active);
         ei.y += 12;
         screen.sprites->palette[1] = Pen(255, 255, 255, 255);
@@ -223,9 +253,13 @@ int Editor::update(uint32_t time, Mouse *mouse) {
 
                     if (i.sprite == 9){
                         mode = EditMode::Pixel;
+                        clipboard = false;
                         return -1;
                     } else if (i.sprite == 10) {
                         mode = EditMode::Sprite;
+                        return -1;
+                    } else if (i.sprite == 1) {
+                        mode = EditMode::Animate;
                         return -1;
                     } else {
                         return i.index;
@@ -295,13 +329,20 @@ int Editor::update(uint32_t time, Mouse *mouse) {
                 break;
         }
     };
-
     if(mode == EditMode::Pixel) {
         if(mouse->button_b) { // Paint
             set_pixel(current_pixel, palette->selected_colour);
         }
         if(mouse->button_a) { // Pick up colour
             palette->selected_colour = get_pixel(current_pixel);
+        }
+    }
+    else if(mode == EditMode::Animate) {
+        if(mouse->button_b) { // End
+            anim_end = current_sprite;
+        }
+        if(mouse->button_a) { // Start
+            anim_start = current_sprite;
         }
     }
     else if(mode == EditMode::Sprite) {
