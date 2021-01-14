@@ -39,7 +39,10 @@ void editor_load(std::string filename) {
 void init() {
     set_screen_mode(ScreenMode::hires);
 
-    editor.load("s4m_ur4i-dingbads.bmp");
+    auto launchPath = blit::get_launch_path();
+    if(launchPath) {
+        editor.load(launchPath);
+    }
 
     screen.sprites = icons = Surface::load(icon_sprites);
     icons->palette[1] = Pen(255, 255, 255, 255);
