@@ -46,8 +46,6 @@ void init() {
     auto launchPath = blit::get_launch_path();
     if(launchPath) {
         editor.load(launchPath);
-    } else {
-        editor.load("pirates.ssrw");
     }
 
     screen.sprites = icons = Surface::load(icon_sprites);
