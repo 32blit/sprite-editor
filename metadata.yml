@@ -9,5 +9,4 @@ version: v0.0.1
 category: utility
 filetypes:
   - bmp
-  - ssrw
-  - sspk
+  - blim
