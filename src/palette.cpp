@@ -1,5 +1,6 @@
 #include "palette.hpp"
 #include "control-icons.hpp"
+#include "graphics/color.hpp"
 
 using namespace blit;
 
@@ -8,16 +9,58 @@ Palette::Palette(blit::Point draw_offset) {
     bounds = Size(16 * (size.w + 1), 16 * (size.h + 1));
     bounds.w--;
     bounds.h--;
+    reset();
 }
 
 void Palette::load(std::string filename) {
     
 }
 
-void Palette::reset() {
+void Palette::clear() {
     for(auto i = 0u; i < 256; i++) {
-        entries[i] = Pen((uint8_t)i, (uint8_t)i, (uint8_t)i, 255);
+        entries[i] = Pen(0, 0, 0, i == 0 ? 0 : 255);
     }
+}
+
+void Palette::reset() {
+    auto i = 0u;
+    entries[0] = Pen(0, 0, 0, 0);
+    for(i = 1u; i < 16; i++) {
+        entries[i] = Pen((uint8_t)i * 16, (uint8_t)i * 16, (uint8_t)i * 16, 255);
+    }
+
+    for(auto y = 0u; y < 8; y++) {
+        for(auto x = 0u; x < 16; x++) {
+            entries[i++] = hsv_to_rgba(x / 16.0f, 1.0f, y / 7.0f);
+        }
+    }
+
+    for(auto y = 0u; y < 7; y++) {
+        for(auto x = 0u; x < 16; x++) {
+            entries[i++] = hsv_to_rgba(x / 16.0f, 1.0f - y / 8.0f, 1.0f);
+        }
+    }
+
+    // Overdraw the first row of dark->bright colorus, since it's just black :D
+    i = 16;
+
+    entries[i++] = Pen(255, 0, 0);
+    entries[i++] = Pen(255, 255, 0);
+    entries[i++] = Pen(0, 255, 0);
+    entries[i++] = Pen(0, 255, 255);
+    entries[i++] = Pen(0, 0, 255);
+    entries[i++] = Pen(255, 0, 255);
+    entries[i++] = Pen(0, 0, 0);
+    entries[i++] = Pen(255, 255, 255);
+
+    entries[i++] = Pen(128, 0, 0);
+    entries[i++] = Pen(128, 128, 0);
+    entries[i++] = Pen(0, 128, 0);
+    entries[i++] = Pen(0, 128, 128);
+    entries[i++] = Pen(0, 0, 128);
+    entries[i++] = Pen(128, 0, 128);
+    entries[i++] = Pen(0, 0, 0);
+    entries[i++] = Pen(128, 128, 128);
 }
 
 Pen Palette::fg_pen() {
@@ -35,7 +78,7 @@ void Palette::render_status(uint32_t time) {
 
     char buf[100] = "";
 
-    snprintf(buf, 100, "FG #%02x%02x%02x BG #%02x%02x%02x", fg_pen().r, fg_pen().g, fg_pen().b, bg_pen().r, bg_pen().g, bg_pen().b);
+    snprintf(buf, 100, "F#%02x%02x%02x%02x B#%02x%02x%02x%02x", fg_pen().r, fg_pen().g, fg_pen().b, bg_pen().r, bg_pen().g, bg_pen().b, bg_pen().a);
     screen.text(buf, minimal_font, draw_offset - Point(2, 12), false);
 }
 

@@ -18,12 +18,14 @@ class Palette {
 
         blit::Point draw_offset;
         void reset();
+        void clear();
         void load(std::string filename);
 
         std::vector<UIcon> tool_icons = {
             UIcon{0, "load", 7},
             UIcon{1, "save", 3},
-            UIcon{2, "clear", 2}
+            UIcon{2, "reset", 5},
+            UIcon{3, "clear", 2}
         };
 
     private:

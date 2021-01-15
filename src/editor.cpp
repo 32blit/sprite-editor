@@ -7,9 +7,6 @@ Editor::Editor(blit::Point draw_offset, Palette *palette) {
     this->palette = palette;
     this->draw_offset = draw_offset;
     buffer.palette = palette->entries;
-    for(auto i = 0u; i < 256; i++) {
-        buffer.palette[i] = Pen((uint8_t)i, (uint8_t)i, (uint8_t)i, 255);
-    }
 }
 
 void Editor::save() {

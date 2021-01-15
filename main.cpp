@@ -116,6 +116,13 @@ void update(uint32_t time) {
                     }
                 });
                 break;
+            case 3:
+                dialog.show("Sure?", "Really clear palette?", [](bool yes){
+                    if(yes) {
+                        palette.clear();
+                    }
+                });
+                break;
             default:
                 break;
         }
