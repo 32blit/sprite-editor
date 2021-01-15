@@ -36,13 +36,13 @@ void Palette::render_status(uint32_t time) {
     char buf[100] = "";
 
     snprintf(buf, 100, "FG #%02x%02x%02x BG #%02x%02x%02x", fg_pen().r, fg_pen().g, fg_pen().b, bg_pen().r, bg_pen().g, bg_pen().b);
-    screen.text(buf, minimal_font, Point(draw_offset.x - 2, 14 + 5), false);
+    screen.text(buf, minimal_font, draw_offset - Point(2, 12), false);
 }
 
 void Palette::render_help(uint32_t time) {
     constexpr int line_height = 12;
 
-    Point help_offset(draw_offset.x - 2, draw_offset.y + bounds.h + 5);
+    Point help_offset(draw_offset.x - 2, draw_offset.y + bounds.h + 4);
 
     screen.pen = Pen(0, 0, 0, 255);
     screen.rectangle(Rect(help_offset, Size(bounds.w + 4, 32)));
@@ -60,6 +60,19 @@ void Palette::render_help(uint32_t time) {
 
     control_icon(Point(64 + help_offset.x, help_offset.y + line_height), Button::B);
     screen.text("Pick BG", minimal_font, help_offset + Point(line_height + 64, line_height));
+}
+
+void Palette::outline_rect(Rect cursor) {
+    // avoid outline being 1px too wide/tall
+    cursor.w--;
+    cursor.h--;
+    screen.line(cursor.tl(), cursor.bl());
+    screen.line(cursor.tr(), cursor.br());
+    // avoid overlap at the corners
+    cursor.w-=2;
+    cursor.x++;
+    screen.line(cursor.tl(), cursor.tr());
+    screen.line(cursor.bl(), cursor.br());
 }
 
 void Palette::render(uint32_t time, Mouse *mouse) {
@@ -81,7 +94,7 @@ void Palette::render(uint32_t time, Mouse *mouse) {
     selected.x += draw_offset.x - 1;
     selected.y += draw_offset.y - 1;
     screen.pen = Pen(255, 255, 255, 255);
-    screen.rectangle(selected);
+    outline_rect(selected);
 
     if(has_focus) {
         uint8_t pulse = (sinf(time / 250.0f) + 1.0f) * 64;
@@ -89,7 +102,7 @@ void Palette::render(uint32_t time, Mouse *mouse) {
         hover.x += draw_offset.x - 1;
         hover.y += draw_offset.y - 1;
         screen.pen = Pen(255, 255, 255, 127 + pulse);
-        screen.rectangle(hover);
+        outline_rect(hover);
     }
 
     for(auto i = 0u; i < 256; i++) {

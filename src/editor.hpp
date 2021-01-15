@@ -22,12 +22,16 @@ class Editor {
         uint8_t data[128 * 128];
         blit::Surface buffer = blit::Surface(data, blit::PixelFormat::P, blit::Size(128, 128));;
 
-        uint8_t tempdata[8 * 8];
+        uint8_t tempdata[64 * 64];
 
         EditMode mode = EditMode::Pixel;
 
+        blit::Size sprite_size = blit::Size(1, 1);
+
         blit::Point current_pixel = blit::Point(0, 0);
         blit::Point current_sprite = blit::Point(0, 0);
+        blit::Point current_sprite_offset = current_sprite * 8;
+        blit::Size sprite_size_pixels = sprite_size * 8;
 
         blit::Point anim_start = blit::Point(0, 0);
         blit::Point anim_end = blit::Point(15, 0);
@@ -52,7 +56,8 @@ class Editor {
             UIcon{2, "clear", 2},
             UIcon{3, "pixel", 9},
             UIcon{4, "sprite", 10},
-            UIcon{5, "animate", 1}
+            UIcon{5, "animate", 1},
+            UIcon{6, "size", 11}
         };
 
     private:
@@ -60,9 +65,12 @@ class Editor {
         bool has_focus = false;
         blit::Vec2 view_offset = blit::Vec2(0, 0);
         int view_zoom = 1;
+        bool sprite_cursor_lock = false;
 
         void render_help(uint32_t time);
         void render_status(uint32_t time);
         void render_preview(uint32_t time);
         void outline_rect(blit::Rect cursor);
+        void update_current_sprite();
+        void update_sprite_lock();
 };

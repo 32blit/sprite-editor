@@ -74,13 +74,13 @@ void Editor::render_status(uint32_t time) {
 
     char buf[100] = "";
     snprintf(buf, 100, "spr:%02i:%02i  pix:%03i:%03i", current_sprite.x, current_sprite.y, current_pixel.x, current_pixel.y);
-    screen.text(buf, minimal_font, Point(15, 14 + 5), false);
+    screen.text(buf, minimal_font, draw_offset - Point(2, 12), false);
 }
 
 void Editor::render_help(uint32_t time) {
     constexpr int line_height = 12;
 
-    Point help_offset(draw_offset.x - 2, draw_offset.y + bounds.h + 5);
+    Point help_offset(draw_offset.x - 2, draw_offset.y + bounds.h + 4);
 
     screen.pen = Pen(0, 0, 0, 255);
     screen.rectangle(Rect(help_offset, Size(bounds.w + 4, 32)));
@@ -112,40 +112,17 @@ void Editor::render_help(uint32_t time) {
 
 }
 
-void Editor::render_preview(uint32_t time) {
-    Pen preview_bg = buffer.palette[palette->selected_background_colour];
-
-    constexpr int padding = 17;
-
-    screen.pen = preview_bg;
-    screen.pen.a = 255;
-
-    Rect preview = Rect(draw_offset.x, 240 - 32 - padding, bounds.w, 32);
-    preview.inflate(2);
-    screen.rectangle(preview);
-
-    screen.stretch_blit(&buffer, Rect(current_sprite * 8, Size(8, 8)), Rect(padding, 240 - 32 - padding, 32, 32));
-    screen.stretch_blit(&buffer, Rect(current_sprite * 8, Size(8, 8)), Rect(padding + 32 + 10, 240 - 32 - padding, 16, 16));
-    screen.stretch_blit(&buffer, Rect(current_sprite * 8, Size(8, 8)), Rect(padding + 32 + 10 + 16 + 10, 240 - 32 - padding, 8, 8));
-
-    Point anim_sprite = anim_start;
-    Point anim_range = (anim_end - anim_start) + Point(1, 1);
-
-    if(anim_range.x < 1 || anim_range.y < 1) return;
-
-    int anim_step = (time / 200) % (anim_range.x * anim_range.y);
-
-    anim_sprite.x += anim_step % anim_range.x;
-    anim_sprite.y += anim_step / anim_range.x;
-
-    screen.stretch_blit(&buffer, Rect(anim_sprite * 8, Size(8, 8)), Rect(padding + 32 + 10 + 16 + 10 + 8 + 10, 240 - 32 - padding, 32, 32));
-}
-
 void Editor::outline_rect(Rect cursor) {
-    screen.line(cursor.tl(), cursor.tr());
-    screen.line(cursor.bl(), cursor.br());
+    // avoid outline being 1px too wide/tall
+    cursor.w--;
+    cursor.h--;
     screen.line(cursor.tl(), cursor.bl());
     screen.line(cursor.tr(), cursor.br());
+    // avoid overlap at the corners
+    cursor.w-=2;
+    cursor.x++;
+    screen.line(cursor.tl(), cursor.tr());
+    screen.line(cursor.bl(), cursor.br());
 }
 
 void Editor::render(uint32_t time, Mouse *mouse) {
@@ -154,7 +131,6 @@ void Editor::render(uint32_t time, Mouse *mouse) {
 
     render_status(time);
     render_help(time);
-    render_preview(time);
 
     clip.inflate(2);
     screen.pen = has_focus ? Pen(255, 255, 255) : Pen(80, 100, 120);
@@ -208,32 +184,80 @@ void Editor::render(uint32_t time, Mouse *mouse) {
         }
 
         // sprite cursor
-        if(view_zoom < 16) {
-            screen.pen = Pen(128, 128, 128, 255);
-            cursor = Rect(draw_offset + (((current_sprite * 8) - view_offset) * view_zoom), Size(8 * view_zoom, 8 * view_zoom));
-            outline_rect(cursor);
+        screen.pen = sprite_cursor_lock ? Pen(255, 64, 64, 128) : Pen(255, 255, 255, 200);
+        cursor = Rect(draw_offset + ((current_sprite_offset - view_offset) * view_zoom), sprite_size_pixels * view_zoom);
+        outline_rect(cursor);
 
-            screen.pen = Pen(64, 128, 64, 255);
-            cursor = Rect(draw_offset + (((anim_start * 8) - view_offset) * view_zoom), Size(8 * view_zoom, 8 * view_zoom));
-            outline_rect(cursor);
+        // animation start/end cursors
+        screen.pen = Pen(128, 255, 128, 200);
+        cursor = Rect(draw_offset + (((anim_start * 8) - view_offset) * view_zoom), sprite_size_pixels * view_zoom);
+        outline_rect(cursor);
 
-            screen.pen = Pen(128, 64, 64, 255);
-            cursor = Rect(draw_offset + (((anim_end * 8) - view_offset) * view_zoom), Size(8 * view_zoom, 8 * view_zoom));
-            outline_rect(cursor);
-        }
+        screen.pen = Pen(128, 128, 255, 200);
+        cursor = Rect(draw_offset + (((anim_end * 8) - view_offset) * view_zoom), sprite_size_pixels * view_zoom);
+        outline_rect(cursor);
     }
 
     screen.clip = Rect(Point(0, 0), screen.bounds);
 
     Point ei = draw_offset - Point(14, 0);
-    for(auto &i : tool_icons) {
+    for(auto i : tool_icons) {
         bool active = (i.sprite == 9 && mode == EditMode::Pixel) || (i.sprite == 10 && mode == EditMode::Sprite) || (i.sprite == 1 && mode == EditMode::Animate);
+        if(i.sprite == 11){
+            i.help += " " + std::to_string(sprite_size.w);
+            i.help += ":" + std::to_string(sprite_size.h);
+        }
         ui_icon(&i, ei, mouse, active);
         ei.y += 12;
         screen.sprites->palette[1] = Pen(255, 255, 255, 255);
     }
 
     screen.pen = background_colour;
+}
+
+void Editor::update_sprite_lock() {
+    // Handles locking the sprite cursor so it doesn't move around while you detail paint
+    if(sprite_size.w == 3 || sprite_size.h == 3) {
+        if(view_zoom >= 4) {
+            sprite_cursor_lock = true;
+            return;
+        }
+    }
+    if(sprite_size.w == 2 || sprite_size.h == 2) {
+        if(view_zoom >= 8) {
+            sprite_cursor_lock = true;
+            return;
+        }
+    }
+    if(sprite_size.w == 1 || sprite_size.h == 1) {
+        if(view_zoom >= 16) {
+            sprite_cursor_lock = true;
+            return;
+        }
+    }
+
+    sprite_cursor_lock = false;
+}
+
+void Editor::update_current_sprite() {
+    update_sprite_lock();
+    if(sprite_cursor_lock) return;
+
+    current_sprite.x = current_pixel.x / 8 - sprite_size.w / 2;
+    current_sprite.y = current_pixel.y / 8 - sprite_size.h / 2;
+
+    if(current_sprite.x < 0) current_sprite.x = 0;
+    if(current_sprite.y < 0) current_sprite.y = 0;
+
+    if(current_sprite.x + sprite_size.w >= 16) {
+        current_sprite.x = 16 - sprite_size.w;
+    }
+
+    if(current_sprite.y + sprite_size.h >= 16) {
+        current_sprite.y = 16 - sprite_size.h;
+    }
+
+    current_sprite_offset = current_sprite * 8;
 }
 
 int Editor::update(uint32_t time, Mouse *mouse) {
@@ -246,34 +270,74 @@ int Editor::update(uint32_t time, Mouse *mouse) {
     }
 
     if(!has_focus) {
-        if(mouse->button_a_pressed) {
-            Point ei = draw_offset - Point(14, 0);
-            for(auto &i : tool_icons) {
-                if(icon_bounds(ei).contains(mouse->cursor)) {
+        Point ei = draw_offset - Point(14, 0);
+        for(auto &i : tool_icons) {
+            if(i.sprite == 11){ // sprite size
+                if(mouse->dpad.x != 0 || mouse->dpad.y != 0) {
+                    if(icon_bounds(ei).contains(mouse->cursor)) {
+                        sprite_size.w += mouse->dpad.x;
+                        sprite_size.h += mouse->dpad.y;
+                        if(sprite_size.w < 1) sprite_size.w = 1;
+                        if(sprite_size.h < 1) sprite_size.h = 1;
+                        if(sprite_size.w > 3) sprite_size.w = 3;
+                        if(sprite_size.h > 3) sprite_size.h = 3;
+                        sprite_size_pixels = sprite_size * 8;
 
-                    if (i.sprite == 9){
-                        mode = EditMode::Pixel;
-                        clipboard = false;
+                        if(current_sprite.x + sprite_size.w >= 16) {
+                            current_sprite.x = 16 - sprite_size.w;
+                        }
+
+                        if(current_sprite.y + sprite_size.h >= 16) {
+                            current_sprite.y = 16 - sprite_size.h;
+                        }
+
+                        current_sprite_offset = current_sprite * 8;
+
+                        if(anim_start.x + sprite_size.w >= 16) {
+                            anim_start.x = 16 - sprite_size.w;
+                        }
+
+                        if(anim_start.y + sprite_size.h >= 16) {
+                            anim_start.y = 16 - sprite_size.h;
+                        }
+
+                        if(anim_end.x + sprite_size.w >= 16) {
+                            anim_end.x = 16 - sprite_size.w;
+                        }
+
+                        if(anim_end.y + sprite_size.h >= 16) {
+                            anim_end.y = 16 - sprite_size.h;
+                        }
+
+
                         return -1;
-                    } else if (i.sprite == 10) {
-                        mode = EditMode::Sprite;
-                        return -1;
-                    } else if (i.sprite == 1) {
-                        mode = EditMode::Animate;
-                        return -1;
-                    } else {
-                        return i.index;
                     }
                 }
-                ei.y += 12;
             }
+            // handle mouse click on icon
+            if(mouse->button_a_pressed && icon_bounds(ei).contains(mouse->cursor)) {
+                if (i.sprite == 9){
+                    mode = EditMode::Pixel;
+                    clipboard = false;
+                    return -1;
+                } else if (i.sprite == 10) {
+                    mode = EditMode::Sprite;
+                    return -1;
+                } else if (i.sprite == 1) {
+                    mode = EditMode::Animate;
+                    return -1;
+                } else {
+                    return i.index;
+                }
+            }
+            ei.y += 12;
         }
         return -1;
     }
 
     Point cursor = mouse->cursor - draw_offset;
 
-    view_offset += mouse->dpad;
+    if(view_zoom > 1) view_offset += mouse->dpad;
 
     if(cursor.x != last_cursor.x || cursor.y != last_cursor.y || mouse->dpad.x != 0 || mouse->dpad.y != 0) {
         current_pixel = (cursor / view_zoom) + Point(view_offset);
@@ -282,53 +346,38 @@ int Editor::update(uint32_t time, Mouse *mouse) {
         if(current_pixel.x < 0) current_pixel.x = 0;
         if(current_pixel.y < 0) current_pixel.y = 0;
 
-        current_sprite = current_pixel / 8;
+        update_current_sprite();
 
         last_cursor = cursor;
     }
 
+    // Handle zooming
+    bool new_zoom = false;
     if(mouse->button_y_pressed && view_zoom > 1) {
         view_zoom >>= 1; // Zoom out
-        view_offset = Vec2(current_sprite.x * 8, current_sprite.y * 8);
-        switch(view_zoom) {
-            case 1:
-                view_offset = Vec2(0, 0);
-                break;
-            case 2:
-                view_offset -= Vec2(28, 28);
-                break;
-            case 4:
-                view_offset -= Vec2(12, 12);
-                break;
-            case 8:
-                view_offset -= Vec2(4, 4);
-                break;
-            case 16:
-                view_offset -= Vec2(0, 0);
-                break;
-        }
+        new_zoom = true;
     };
     if(mouse->button_x_pressed && view_zoom < 16) {
         view_zoom <<= 1; // Zoom in
-        view_offset = Vec2(current_sprite.x * 8, current_sprite.y * 8);
-        switch(view_zoom) {
-            case 1:
-                view_offset = Vec2(0, 0);
-                break;
-            case 2:
-                view_offset -= Vec2(28, 28);
-                break;
-            case 4:
-                view_offset -= Vec2(12, 12);
-                break;
-            case 8:
-                view_offset -= Vec2(4, 4);
-                break;
-            case 16:
-                view_offset -= Vec2(0, 0);
-                break;
-        }
+        new_zoom = true;
     };
+    if(new_zoom) {
+        if(view_zoom == 1) {
+            view_offset.x = 0;
+            view_offset.y = 0;
+            update_sprite_lock();
+        }
+        else 
+        {
+            view_offset.x = current_sprite_offset.x;
+            view_offset.y = current_sprite_offset.y;
+            int visible_pixels = 16 * 8 / view_zoom;
+            view_offset.x -= (visible_pixels - sprite_size_pixels.w) / 2;
+            view_offset.y -= (visible_pixels - sprite_size_pixels.h) / 2;
+            update_sprite_lock();
+        }
+    }
+
     if(mode == EditMode::Pixel) {
         if(mouse->button_b) { // Paint
             set_pixel(current_pixel, palette->selected_colour);
@@ -348,39 +397,47 @@ int Editor::update(uint32_t time, Mouse *mouse) {
     else if(mode == EditMode::Sprite) {
         if(mouse->button_b_pressed) {
             if(clipboard) {
-                Point sprite_tl = current_sprite * 8;
-                for(auto x = 0u; x < 8; x++) {
-                    for(auto y = 0u; y < 8; y++) {
-                        set_pixel(sprite_tl + Point(x, y), tempdata[x + y * 8]);
+                for(auto x = 0; x < sprite_size_pixels.w; x++) {
+                    for(auto y = 0; y < sprite_size_pixels.h; y++) {
+                        set_pixel(current_sprite_offset + Point(x, y), tempdata[x + y * sprite_size_pixels.w]);
                     }
                 }
             } else {
                 // Rotate 90
                 // Since i have to loop to clear to 0 anyway, might as well raw copy from SRC to DST
-                Point sprite_tl = current_sprite * 8;
-                for(auto x = 0u; x < 8; x++) {
-                    for(auto y = 0u; y < 8; y++) {
-                        tempdata[x + y * 8] = get_pixel(sprite_tl + Point(x, y));
+                for(auto x = 0; x < sprite_size_pixels.w; x++) {
+                    for(auto y = 0; y < sprite_size_pixels.h; y++) {
+                        tempdata[x + y * sprite_size_pixels.w] = get_pixel(current_sprite_offset + Point(x, y));
                     }
                 }
-                for(auto x = 0u; x < 8; x++) {
-                    for(auto y = 0u; y < 8; y++) {
-                        set_pixel(sprite_tl + Point(7 - y, x), tempdata[x + y * 8]);
+
+                // actual rotation happens here
+                if(sprite_size.w == sprite_size.h) { // Can do 90 degree intervals because our sprite is square
+                    for(auto x = 0; x < sprite_size_pixels.w; x++) {
+                        for(auto y = 0; y < sprite_size_pixels.h; y++) {
+                            set_pixel(current_sprite_offset + Point(sprite_size_pixels.w - 1 - y, x), tempdata[x + y * sprite_size_pixels.w]);
+                        }
+                    }
+                } else { // must do 180
+                    for(auto x = 0; x < sprite_size_pixels.w; x++) {
+                        for(auto y = 0; y < sprite_size_pixels.h; y++) {
+                            set_pixel(current_sprite_offset + Point(sprite_size_pixels.w - 1 - x, sprite_size_pixels.h - 1 - y), tempdata[x + y * sprite_size_pixels.w]);
+                        }
                     }
                 }
+
             }
         } else if(mouse->button_a_pressed) {
             if(!clipboard) {
-                Point sprite_tl = current_sprite * 8;
-                for(auto x = 0u; x < 8; x++) {
-                    for(auto y = 0u; y < 8; y++) {
-                        tempdata[x + y * 8] = get_pixel(sprite_tl + Point(x, y));
+                for(auto x = 0; x < sprite_size_pixels.w; x++) {
+                    for(auto y = 0; y < sprite_size_pixels.h; y++) {
+                        tempdata[x + y * sprite_size_pixels.w] = get_pixel(current_sprite_offset + Point(x, y));
                     }
                 }
             }
             clipboard = !clipboard;
         }
-    } 
+    }
 
     return -1;
 }

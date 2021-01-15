@@ -2,6 +2,7 @@
 #include "assets.hpp"
 #include "src/mouse.hpp"
 #include "src/editor.hpp"
+#include "src/preview.hpp"
 #include "src/dialog.hpp"
 #include "src/file-browser.hpp"
 #include "engine/api_private.hpp"
@@ -10,9 +11,12 @@ using namespace blit;
 
 Screen currentscreen = Screen::Edit;
 
+constexpr int PADDING = 17;
+
 Mouse mouse;
-Palette palette(Point(175, 14 + 17));
-Editor editor(Point(17, 14 + 17), &palette);
+Palette palette(Point(175, PADDING));
+Editor editor(Point(PADDING, PADDING), &palette);
+Preview preview(Point(PADDING, 240 - 50 - PADDING), &editor);
 
 Dialog dialog;
 FileBrowser file_browser;
@@ -42,6 +46,8 @@ void init() {
     auto launchPath = blit::get_launch_path();
     if(launchPath) {
         editor.load(launchPath);
+    } else {
+        editor.load("pirates.ssrw");
     }
 
     screen.sprites = icons = Surface::load(icon_sprites);
@@ -50,39 +56,13 @@ void init() {
 
 void render(uint32_t time) {
     screen.sprites = icons;
-    screen.pen = Pen(0, 0, 0, 0);
-    screen.pen.a = 255;
+    screen.pen = Pen(0, 0, 0, 255);
     screen.clear();
-
-    screen.alpha = 255;
-    screen.mask = nullptr;
-    screen.pen = Pen(255, 255, 255);
-    screen.rectangle(Rect(0, 0, 320, 14));
-    screen.pen = Pen(0, 0, 0); 
-    switch(currentscreen) {
-        case Screen::Edit:
-            screen.text("32blit Sprite Editor", minimal_font, Point(5, 4));
-            break;
-        case Screen::Menu:
-            screen.text("Menu", minimal_font, Point(5, 4));
-            break;
-        case Screen::SavePalette:
-            screen.text("Save Palette", minimal_font, Point(5, 4));
-            break;
-        case Screen::SaveSprites:
-            screen.text("Save Sprites", minimal_font, Point(5, 4));
-            break;
-        case Screen::LoadPalette:
-            screen.text("Load Palette", minimal_font, Point(5, 4));
-            break;
-        case Screen::LoadSprites:
-            screen.text("Load Sprites", minimal_font, Point(5, 4));
-            break;
-    }
 
     if(currentscreen == Screen::Edit) {
         editor.render(time, &mouse);
         palette.render(time, &mouse);
+        preview.render(time, &mouse);
     }
 
     if(currentscreen == Screen::LoadSprites) {
@@ -116,8 +96,10 @@ void update(uint32_t time) {
     }
 
     if(currentscreen == Screen::Edit) {
+        // TODO: fix this eldritch horror, nor... not?
         int editor_action = editor.update(time, &mouse);
         int palette_action = palette.update(time, &mouse);
+        int preview_action = preview.update(time, &mouse);
 
         switch(palette_action) {
             case 0:
@@ -160,6 +142,9 @@ void update(uint32_t time) {
                         editor.reset();
                     }
                 });
+                break;
+            case 11:
+                dialog.show("Tip", "Use the d-pad to configure sprite size", [](bool yes){});
                 break;
             default:
                 break;

@@ -36,5 +36,6 @@ class Palette {
 
         void render_help(uint32_t time);
         void render_status(uint32_t time);
+        void outline_rect(blit::Rect cursor);
 
 };
