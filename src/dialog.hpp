@@ -15,6 +15,12 @@ struct Dialog {
   const blit::Rect rect_x = blit::Rect(blit::Point(dialog_rect.x + 201, dialog_rect.y + 70), blit::Size(25, 10));
   const int header_height = 16;
 
+  void show(std::string title, std::string message) {
+    this->title = title;
+    this->message = message;
+    this->on_answer = nullptr;
+  }
+
   void show(std::string title, std::string message, AnswerFunc on_answer) {
     this->title = title;
     this->message = message;
@@ -34,10 +40,10 @@ struct Dialog {
     }
 
     if(button_x) {
-      on_answer(true);
+      if(on_answer != nullptr) on_answer(true);
       title = message = "";
     } else if(button_y) {
-      on_answer(false);
+      if(on_answer != nullptr) on_answer(false);
       title = message = "";
     }
 
@@ -71,10 +77,16 @@ struct Dialog {
     blit::screen.pen = blit::Pen(255, 255, 255);
     blit::screen.text(message, blit::minimal_font, blit::Rect(dialog_rect.x + 6, dialog_rect.y + header_height + 5, dialog_rect.w - 12, 45));
 
-    blit::screen.text("No      Yes    ", blit::minimal_font, blit::Rect(dialog_rect.x + 1, dialog_rect.y + dialog_rect.h - 17, dialog_rect.w - 2, 16 + blit::minimal_font.spacing_y), true, blit::TextAlign::center_right);
+    if(on_answer == nullptr) {
+      blit::screen.text("Ok    ", blit::minimal_font, blit::Rect(dialog_rect.x + 1, dialog_rect.y + dialog_rect.h - 17, dialog_rect.w - 2, 16 + blit::minimal_font.spacing_y), true, blit::TextAlign::center_right);
 
-    control_icon(blit::Point(dialog_rect.x + 185, dialog_rect.y + 71), blit::Button::Y);
-    control_icon(blit::Point(dialog_rect.x + 218, dialog_rect.y + 71), blit::Button::X);
+      control_icon(blit::Point(dialog_rect.x + 218, dialog_rect.y + 71), blit::Button::X);
+    } else {
+      blit::screen.text("No      Yes    ", blit::minimal_font, blit::Rect(dialog_rect.x + 1, dialog_rect.y + dialog_rect.h - 17, dialog_rect.w - 2, 16 + blit::minimal_font.spacing_y), true, blit::TextAlign::center_right);
+
+      control_icon(blit::Point(dialog_rect.x + 185, dialog_rect.y + 71), blit::Button::Y);
+      control_icon(blit::Point(dialog_rect.x + 218, dialog_rect.y + 71), blit::Button::X);
+    }
   }
 
 };

@@ -11,7 +11,8 @@ set(PROJECT_SOURCE
     src/palette.cpp
     src/preview.cpp
     src/file-browser.cpp
-    src/control-icons.cpp)
+    src/control-icons.cpp
+    src/keyboard.cpp)
 set(PROJECT_DISTRIBS LICENSE README.md)
 
 # Build configuration; approach this with caution!

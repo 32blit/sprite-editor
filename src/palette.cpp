@@ -78,7 +78,7 @@ void Palette::render_status(uint32_t time) {
 
     char buf[100] = "";
 
-    snprintf(buf, 100, "F#%02x%02x%02x%02x B#%02x%02x%02x%02x", fg_pen().r, fg_pen().g, fg_pen().b, bg_pen().r, bg_pen().g, bg_pen().b, bg_pen().a);
+    snprintf(buf, 100, "F#%02x%02x%02x%02x B#%02x%02x%02x%02x", fg_pen().r, fg_pen().g, fg_pen().b, fg_pen().a, bg_pen().r, bg_pen().g, bg_pen().b, bg_pen().a);
     screen.text(buf, minimal_font, draw_offset - Point(2, 12), false);
 }
 

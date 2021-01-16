@@ -40,7 +40,7 @@ class Editor {
         Palette *palette;
     
         void reset();
-        void save();
+        bool save();
         void load(std::string filename);
 
         std::string current_file;

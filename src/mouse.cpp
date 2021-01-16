@@ -21,10 +21,10 @@ void Mouse::update(uint32_t time) {
     dpad_left = buttons.state & Button::DPAD_LEFT;
     dpad_right = buttons.state & Button::DPAD_RIGHT;
 
-    dpad_up_pressed = buttons.released & Button::DPAD_UP;
-    dpad_down_pressed = buttons.released & Button::DPAD_DOWN;
-    dpad_left_pressed = buttons.released & Button::DPAD_LEFT;
-    dpad_right_pressed = buttons.released & Button::DPAD_RIGHT;
+    dpad_up_pressed = buttons.pressed & Button::DPAD_UP;
+    dpad_down_pressed = buttons.pressed & Button::DPAD_DOWN;
+    dpad_left_pressed = buttons.pressed & Button::DPAD_LEFT;
+    dpad_right_pressed = buttons.pressed & Button::DPAD_RIGHT;
 
     button_a = buttons.state & Button::A;
     button_b = buttons.state & Button::B;
@@ -32,11 +32,16 @@ void Mouse::update(uint32_t time) {
     button_y = buttons.state & Button::Y;
     button_menu = buttons.state & Button::MENU;
 
-    button_a_pressed = buttons.released & Button::A;
-    button_b_pressed = buttons.released & Button::B;
-    button_x_pressed = buttons.released & Button::X;
-    button_y_pressed = buttons.released & Button::Y;
-    button_menu_pressed = buttons.released & Button::MENU;
+    button_a_pressed = buttons.pressed & Button::A;
+    button_b_pressed = buttons.pressed & Button::B;
+    button_x_pressed = buttons.pressed & Button::X;
+    button_y_pressed = buttons.pressed & Button::Y;
+    button_menu_pressed = buttons.pressed & Button::MENU;
+
+    button_a_repeat = ar_button_a.next(time, buttons & Button::A);
+    button_b_repeat = ar_button_b.next(time, buttons & Button::B);
+    button_x_repeat = ar_button_x.next(time, buttons & Button::X);
+    button_y_repeat = ar_button_y.next(time, buttons & Button::Y);
 
     dpad = Vec2(0.0f, 0.0f);
     if(ar_dpad_u.next(time, buttons & Button::DPAD_UP)) dpad.y = -1.0f;
@@ -49,4 +54,7 @@ void Mouse::update(uint32_t time) {
     if(cursor.x >= screen.bounds.w) cursor.x = screen.bounds.w - 1;
     if(cursor.y < 0) cursor.y = 0;
     if(cursor.y >= screen.bounds.h) cursor.y = screen.bounds.h - 1;
+
+    cursor_moved = cursor.x != last_cursor.x || cursor.y != last_cursor.y;
+    last_cursor = cursor;
 }

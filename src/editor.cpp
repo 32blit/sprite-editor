@@ -9,8 +9,8 @@ Editor::Editor(blit::Point draw_offset, Palette *palette) {
     buffer.palette = palette->entries;
 }
 
-void Editor::save() {
-    buffer.save(current_file);
+bool Editor::save() {
+    return buffer.save(current_file) && file_exists(current_file);
 }
 
 void Editor::load(std::string filename) {
@@ -18,6 +18,8 @@ void Editor::load(std::string filename) {
     temp = Surface::load(filename, buf, sizeof(buf));
 
     if(temp) {
+        reset();
+
         if(temp->bounds.w > 128 || temp->bounds.h > 128) {
             if(temp->palette) delete[] temp->palette;
             delete temp;
@@ -53,6 +55,20 @@ void Editor::load(std::string filename) {
 }
 
 void Editor::reset() {
+    mode = EditMode::Pixel;
+    clipboard = false;
+    current_pixel = Point(0, 0);
+    current_sprite = Point(0, 0);
+    current_sprite_offset = current_sprite * 8;
+    sprite_size = Size(1, 1);
+    sprite_size_pixels = sprite_size * 8;
+
+    anim_start = Point(0, 0);
+    anim_end = Point(15, 0);
+
+    view_offset.x = 0;
+    view_offset.y = 0;
+    view_zoom = 1;
     for(auto i = 0u; i < 128 * 128; i++){
         data[i] = 0;
     }
@@ -336,7 +352,7 @@ int Editor::update(uint32_t time, Mouse *mouse) {
 
     if(view_zoom > 1) view_offset += mouse->dpad;
 
-    if(cursor.x != last_cursor.x || cursor.y != last_cursor.y || mouse->dpad.x != 0 || mouse->dpad.y != 0) {
+    if(mouse->cursor_moved || mouse->dpad.x != 0 || mouse->dpad.y != 0) {
         current_pixel = (cursor / view_zoom) + Point(view_offset);
         if(current_pixel.x > 127) current_pixel.x = 127;
         if(current_pixel.y > 127) current_pixel.y = 127;
@@ -344,8 +360,6 @@ int Editor::update(uint32_t time, Mouse *mouse) {
         if(current_pixel.y < 0) current_pixel.y = 0;
 
         update_current_sprite();
-
-        last_cursor = cursor;
     }
 
     // Handle zooming

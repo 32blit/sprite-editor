@@ -18,11 +18,15 @@ public:
 
     void render();
 
+    bool update(uint32_t time, Mouse *mouse);
+
     void set_extensions(std::set<std::string> exts);
 
     void set_on_file_open(void (*func)(std::string));
 
     void set_current_dir(const std::string &dir);
+
+    void set_height(uint32_t height);
 
 private:
     void update_list();
@@ -33,6 +37,7 @@ private:
 
     void item_activated(const Item &item) override;
 
+    bool has_focus = false;
     std::vector<blit::FileInfo> files;
     std::vector<Item> file_items;
     std::string cur_dir = "/";
