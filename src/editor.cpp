@@ -265,19 +265,25 @@ void Editor::update_current_sprite(Vec2 viewport_shift) {
         Rect current_sprite_bounds = Rect(current_sprite_offset, sprite_size_pixels);
         current_sprite_bounds.inflate(2); // margin for error for when using d-pad to accurately paint
         if(current_sprite_bounds.contains(current_pixel)) return;
+        current_sprite_bounds.deflate(2);
+
+        Point new_sprite_offset = current_sprite_offset;
 
         if(viewport_shift.x != 0){
-            current_sprite_offset.x = view_offset.x;
-            current_sprite_offset.x += (visible_pixels - sprite_size_pixels.w) / 2;
-            current_sprite_offset.x += 4;
+            new_sprite_offset.x = view_offset.x;
+            new_sprite_offset.x += (visible_pixels - sprite_size_pixels.w) / 2;
         }
     
         if(viewport_shift.y != 0){
-            current_sprite_offset.y = view_offset.y;
-            current_sprite_offset.y += (visible_pixels - sprite_size_pixels.h) / 2;
-            current_sprite_offset.y += 4;
+            new_sprite_offset.y = view_offset.y;
+            new_sprite_offset.y += (visible_pixels - sprite_size_pixels.h) / 2;
         }
 
+        Rect new_sprite_bounds = Rect(new_sprite_offset, sprite_size_pixels);
+        // Fudge factor since (1, 1, 1, 1) and (2, 1, 1, 1) are considered to overlap?
+        new_sprite_bounds.deflate(1);
+        if(new_sprite_bounds.intersects(current_sprite_bounds)) return; // Step the cursor one whole X*Y sprite at a time
+        current_sprite_offset = new_sprite_offset;
         current_sprite = current_sprite_offset / 8;
     }
     else
