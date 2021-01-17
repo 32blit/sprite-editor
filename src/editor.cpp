@@ -114,8 +114,8 @@ void Editor::render_help(uint32_t time) {
             screen.text("Paint", minimal_font, help_offset + Point(line_height + 64, line_height));
             break;
         case EditMode::Sprite:
-            screen.text(clipboard ? "Done" : "Copy", minimal_font, help_offset + Point(line_height, line_height));
-            screen.text(clipboard ? "Paste" : "Rotate", minimal_font, help_offset + Point(line_height + 64, line_height));
+            screen.text("Copy", minimal_font, help_offset + Point(line_height, line_height));
+            screen.text("Paste", minimal_font, help_offset + Point(line_height + 64, line_height));
             break;
         case EditMode::Animate:
             screen.text("Start", minimal_font, help_offset + Point(line_height, line_height));
@@ -265,7 +265,9 @@ void Editor::update_current_sprite(Vec2 viewport_shift) {
         // This only applies while sprite cursor lock is on- IE when you are considered to be "zoomed in" enough to be working on *a* sprite.
         int visible_pixels = 16 * 8 / view_zoom;
         Rect current_sprite_bounds = Rect(current_sprite_offset, sprite_size_pixels);
-        current_sprite_bounds.inflate(2); // margin for error for when using d-pad to accurately paint
+        if(sprite_size.w > 1 || sprite_size.h > 1) {
+            current_sprite_bounds.inflate(2); // margin for error for when using d-pad to accurately paint
+        }
         if(current_sprite_bounds.contains(current_pixel)) return;
         current_sprite_bounds.deflate(2);
 
@@ -352,6 +354,8 @@ int Editor::update(uint32_t time, Mouse *mouse) {
                                 }
                             }
                         }
+
+                        continue;
                     }
                 }
             }
@@ -370,7 +374,29 @@ int Editor::update(uint32_t time, Mouse *mouse) {
                                 set_pixel(current_sprite_offset + Point(x, y), tempdata[nx + ny * 64]);
                             }
                         }
+                        continue;
                     }
+                }
+                if(mouse->button_a_pressed && icon_bounds(ei).contains(mouse->cursor)) {
+                    // Rotate 90
+                    // Since i have to loop to clear to 0 anyway, might as well raw copy from SRC to DST
+                    copy_sprite_to_temp();
+
+                    // actual rotation happens here
+                    if(sprite_size.w == sprite_size.h) { // Can do 90 degree intervals because our sprite is square
+                        for(auto x = 0; x < sprite_size_pixels.w; x++) {
+                            for(auto y = 0; y < sprite_size_pixels.h; y++) {
+                                set_pixel(current_sprite_offset + Point(sprite_size_pixels.w - 1 - y, x), tempdata[x + y * 64]);
+                            }
+                        }
+                    } else { // must do 180
+                        for(auto x = 0; x < sprite_size_pixels.w; x++) {
+                            for(auto y = 0; y < sprite_size_pixels.h; y++) {
+                                set_pixel(current_sprite_offset + Point(sprite_size_pixels.w - 1 - x, sprite_size_pixels.h - 1 - y), tempdata[x + y * 64]);
+                            }
+                        }
+                    }
+                    continue;
                 }
             }
             if(i.sprite == 11){ // sprite size
@@ -419,10 +445,10 @@ int Editor::update(uint32_t time, Mouse *mouse) {
             if(mouse->button_a_pressed && icon_bounds(ei).contains(mouse->cursor)) {
                 if (i.sprite == 9){
                     mode = EditMode::Pixel;
-                    clipboard = false;
                     return -1;
                 } else if (i.sprite == 10) {
                     mode = EditMode::Sprite;
+                    clipboard = false;
                     return -1;
                 } else if (i.sprite == 1) {
                     mode = EditMode::Animate;
@@ -501,32 +527,10 @@ int Editor::update(uint32_t time, Mouse *mouse) {
                         set_pixel(current_sprite_offset + Point(x, y), tempdata[x + y * 64]);
                     }
                 }
-            } else {
-                // Rotate 90
-                // Since i have to loop to clear to 0 anyway, might as well raw copy from SRC to DST
-                copy_sprite_to_temp();
-
-                // actual rotation happens here
-                if(sprite_size.w == sprite_size.h) { // Can do 90 degree intervals because our sprite is square
-                    for(auto x = 0; x < sprite_size_pixels.w; x++) {
-                        for(auto y = 0; y < sprite_size_pixels.h; y++) {
-                            set_pixel(current_sprite_offset + Point(sprite_size_pixels.w - 1 - y, x), tempdata[x + y * 64]);
-                        }
-                    }
-                } else { // must do 180
-                    for(auto x = 0; x < sprite_size_pixels.w; x++) {
-                        for(auto y = 0; y < sprite_size_pixels.h; y++) {
-                            set_pixel(current_sprite_offset + Point(sprite_size_pixels.w - 1 - x, sprite_size_pixels.h - 1 - y), tempdata[x + y * 64]);
-                        }
-                    }
-                }
-
             }
         } else if(mouse->button_a_pressed) {
-            if(!clipboard) {
-                copy_sprite_to_temp();
-            }
-            clipboard = !clipboard;
+            copy_sprite_to_temp();
+            clipboard = true;
         }
     }
 

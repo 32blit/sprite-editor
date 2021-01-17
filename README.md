@@ -17,8 +17,7 @@ It works in 8x8 tiles but will handle sprites up to 3x3 tiles in side (24x24 pix
     - [Load/Save/Clear](#loadsaveclear)
     - [Sprite Size](#sprite-size)
     - [Mirror](#mirror)
-    - [Roll](#roll)
-    - [(TODO) Rotate](#todo-rotate)
+    - [Roll / Rotate](#roll--rotate)
 - [The Palette](#the-palette)
 
 ## The Editor
@@ -117,15 +116,15 @@ The Mirror tool will mirror the current sprite Left/Right or Up/Down. Use the d-
 
 The Mirror tool will only be active if you're zoomed in enough to have a locked (red) Sprite Cursor.
 
-#### Roll
+#### Roll / Rotate
 
-The Roll tool will roll the current sprite Left/Right or Up/Down. Use the d-pad buttons to roll one pixel at a time. This is useful for shifting art around inside a sprite bounds for animation, or just correcting your drawing position.
+The Roll/Rotate tool will roll the current sprite Left/Right or Up/Down or rotate it 90 (square) or 180 (rectangular) degrees.
 
-The Roll tool will only be active if you're zoomed in enough to have a locked (red) Sprite Cursor.
+Use the d-pad buttons to roll one pixel at a time. This is useful for shifting art around inside a sprite bounds for animation, or just correcting your drawing position.
 
-#### (TODO) Rotate
+Press the A button rotate clockwise.
 
-Rotate is currently only available in Sprite Mode, but should probably have its own icon so that Sprite Mode can make better use of that button.
+The Roll / Rotate tool will only be active if you're zoomed in enough to have a locked (red) Sprite Cursor.
 
 ## The Palette
 

@@ -59,7 +59,7 @@ class Editor {
             UIcon{5, "animate", 1},
             UIcon{6, "size", 11},
             UIcon{7, "mirror", 6},
-            UIcon{8, "roll", 15}
+            UIcon{8, "roll/rot", 15}
         };
 
     private:
