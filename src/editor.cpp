@@ -28,20 +28,20 @@ void Editor::load(std::string filename) {
         current_file = filename;
         if(temp->palette) {
             uint8_t *pen = temp->data;
-            for(auto y = 0u; y < buffer.bounds.h; y++) {
-                for(auto x = 0u; x < buffer.bounds.w; x++) {
+            for(auto y = 0; y < buffer.bounds.h; y++) {
+                for(auto x = 0; x < buffer.bounds.w; x++) {
                     set_pixel(Point(x, y), *pen);
                     pen++;
                 }
             }
-            for(auto i = 0u; i < 256; i++) {
+            for(auto i = 0u; i < 256u; i++) {
                 palette->entries[i] = temp->palette[i];
             }
         }
         else{
             Pen *pen = (Pen*)temp->data;
-            for(auto y = 0u; y < buffer.bounds.h; y++) {
-                for(auto x = 0u; x < buffer.bounds.w; x++) {
+            for(auto y = 0; y < buffer.bounds.h; y++) {
+                for(auto x = 0; x < buffer.bounds.w; x++) {
                     auto index = palette->add(*pen);
                     pen++;
                     set_pixel(Point(x, y), index);
@@ -215,12 +215,13 @@ void Editor::render(uint32_t time, Mouse *mouse) {
 
     Point ei = draw_offset - Point(14, 0);
     for(auto i : tool_icons) {
+        bool disabled = (i.sprite == 15 || i.sprite == 6) && !sprite_cursor_lock; // mirror/roll only enabled when cursor is locked
         bool active = (i.sprite == 9 && mode == EditMode::Pixel) || (i.sprite == 10 && mode == EditMode::Sprite) || (i.sprite == 1 && mode == EditMode::Animate);
         if(i.sprite == 11){
             i.help += " " + std::to_string(sprite_size.w);
             i.help += ":" + std::to_string(sprite_size.h);
         }
-        ui_icon(&i, ei, mouse, active);
+        ui_icon(&i, ei, mouse, active, disabled);
         ei.y += 12;
         screen.sprites->palette[1] = Pen(255, 255, 255, 255);
     }
@@ -252,12 +253,38 @@ void Editor::update_sprite_lock() {
     sprite_cursor_lock = false;
 }
 
-void Editor::update_current_sprite() {
+void Editor::update_current_sprite(Vec2 viewport_shift) {
     update_sprite_lock();
-    if(sprite_cursor_lock) return;
+    if(sprite_cursor_lock) {
+        // This is basically the inverse of the code that keeps the current sprite centered in the viewport
+        // it tries to figure out which sprite you're *looking at* but this includes considering the intent of your cursor
+        // plus the intent of your viewport panning.
+        // EG: it will only shift horizontally to the next sprite if you *PAN* horizontally and if your cursor has left the previous sprite bounds
+        // This only applies while sprite cursor lock is on- IE when you are considered to be "zoomed in" enough to be working on *a* sprite.
+        int visible_pixels = 16 * 8 / view_zoom;
+        Rect current_sprite_bounds = Rect(current_sprite_offset, sprite_size_pixels);
+        current_sprite_bounds.inflate(2); // margin for error for when using d-pad to accurately paint
+        if(current_sprite_bounds.contains(current_pixel)) return;
 
-    current_sprite.x = current_pixel.x / 8 - sprite_size.w / 2;
-    current_sprite.y = current_pixel.y / 8 - sprite_size.h / 2;
+        if(viewport_shift.x != 0){
+            current_sprite_offset.x = view_offset.x;
+            current_sprite_offset.x += (visible_pixels - sprite_size_pixels.w) / 2;
+            current_sprite_offset.x += 4;
+        }
+    
+        if(viewport_shift.y != 0){
+            current_sprite_offset.y = view_offset.y;
+            current_sprite_offset.y += (visible_pixels - sprite_size_pixels.h) / 2;
+            current_sprite_offset.y += 4;
+        }
+
+        current_sprite = current_sprite_offset / 8;
+    }
+    else
+    {
+        current_sprite.x = current_pixel.x / 8 - sprite_size.w / 2;
+        current_sprite.y = current_pixel.y / 8 - sprite_size.h / 2;
+    }
 
     if(current_sprite.x < 0) current_sprite.x = 0;
     if(current_sprite.y < 0) current_sprite.y = 0;
@@ -273,6 +300,16 @@ void Editor::update_current_sprite() {
     current_sprite_offset = current_sprite * 8;
 }
 
+void Editor::copy_sprite_to_temp() {
+    // Copy into temp buffer
+    clipboard = false;
+    for(auto x = 0; x < sprite_size_pixels.w; x++) {
+        for(auto y = 0; y < sprite_size_pixels.h; y++) {
+            tempdata[x + y * 64] = get_pixel(current_sprite_offset + Point(x, y));
+        }
+    }
+}
+
 int Editor::update(uint32_t time, Mouse *mouse) {
     static Point last_cursor(0, 0);
     Rect highlight = Rect(draw_offset, bounds);
@@ -285,6 +322,49 @@ int Editor::update(uint32_t time, Mouse *mouse) {
     if(!has_focus) {
         Point ei = draw_offset - Point(14, 0);
         for(auto &i : tool_icons) {
+            if(i.sprite == 6 && sprite_cursor_lock){ // sprite mirror
+                if(mouse->dpad.x != 0 || mouse->dpad.y != 0) {
+                    if(icon_bounds(ei).contains(mouse->cursor)) {
+
+                        copy_sprite_to_temp();
+
+                        if(mouse->dpad.x != 0){
+                            // Mirror LR
+                            for(auto x = 0; x < sprite_size_pixels.w; x++) {
+                                for(auto y = 0; y < sprite_size_pixels.h; y++) {
+                                    set_pixel(current_sprite_offset + Point(sprite_size_pixels.w - 1 - x, y), tempdata[x + y * 64]);
+                                }
+                            }
+                        }
+                        if(mouse->dpad.y != 0){
+                            // Mirror UD
+                            for(auto x = 0; x < sprite_size_pixels.w; x++) {
+                                for(auto y = 0; y < sprite_size_pixels.h; y++) {
+                                    set_pixel(current_sprite_offset + Point(x, sprite_size_pixels.h - 1 - y), tempdata[x + y * 64]);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if(i.sprite == 15 && sprite_cursor_lock){ // sprite roll
+                if(mouse->dpad.x != 0 || mouse->dpad.y != 0) {
+                    if(icon_bounds(ei).contains(mouse->cursor)) {
+                        copy_sprite_to_temp();
+                        for(auto x = 0; x < sprite_size_pixels.w; x++) {
+                            for(auto y = 0; y < sprite_size_pixels.h; y++) {
+                                int nx = x - mouse->dpad.x;
+                                int ny = y - mouse->dpad.y;
+                                if(nx < 0) nx = sprite_size_pixels.w - 1;
+                                if(ny < 0) ny = sprite_size_pixels.h - 1;
+                                if(nx == sprite_size_pixels.w) nx = 0;
+                                if(ny == sprite_size_pixels.h) ny = 0;
+                                set_pixel(current_sprite_offset + Point(x, y), tempdata[nx + ny * 64]);
+                            }
+                        }
+                    }
+                }
+            }
             if(i.sprite == 11){ // sprite size
                 if(mouse->dpad.x != 0 || mouse->dpad.y != 0) {
                     if(icon_bounds(ei).contains(mouse->cursor)) {
@@ -359,7 +439,7 @@ int Editor::update(uint32_t time, Mouse *mouse) {
         if(current_pixel.x < 0) current_pixel.x = 0;
         if(current_pixel.y < 0) current_pixel.y = 0;
 
-        update_current_sprite();
+        update_current_sprite(mouse->dpad);
     }
 
     // Handle zooming
@@ -410,29 +490,25 @@ int Editor::update(uint32_t time, Mouse *mouse) {
             if(clipboard) {
                 for(auto x = 0; x < sprite_size_pixels.w; x++) {
                     for(auto y = 0; y < sprite_size_pixels.h; y++) {
-                        set_pixel(current_sprite_offset + Point(x, y), tempdata[x + y * sprite_size_pixels.w]);
+                        set_pixel(current_sprite_offset + Point(x, y), tempdata[x + y * 64]);
                     }
                 }
             } else {
                 // Rotate 90
                 // Since i have to loop to clear to 0 anyway, might as well raw copy from SRC to DST
-                for(auto x = 0; x < sprite_size_pixels.w; x++) {
-                    for(auto y = 0; y < sprite_size_pixels.h; y++) {
-                        tempdata[x + y * sprite_size_pixels.w] = get_pixel(current_sprite_offset + Point(x, y));
-                    }
-                }
+                copy_sprite_to_temp();
 
                 // actual rotation happens here
                 if(sprite_size.w == sprite_size.h) { // Can do 90 degree intervals because our sprite is square
                     for(auto x = 0; x < sprite_size_pixels.w; x++) {
                         for(auto y = 0; y < sprite_size_pixels.h; y++) {
-                            set_pixel(current_sprite_offset + Point(sprite_size_pixels.w - 1 - y, x), tempdata[x + y * sprite_size_pixels.w]);
+                            set_pixel(current_sprite_offset + Point(sprite_size_pixels.w - 1 - y, x), tempdata[x + y * 64]);
                         }
                     }
                 } else { // must do 180
                     for(auto x = 0; x < sprite_size_pixels.w; x++) {
                         for(auto y = 0; y < sprite_size_pixels.h; y++) {
-                            set_pixel(current_sprite_offset + Point(sprite_size_pixels.w - 1 - x, sprite_size_pixels.h - 1 - y), tempdata[x + y * sprite_size_pixels.w]);
+                            set_pixel(current_sprite_offset + Point(sprite_size_pixels.w - 1 - x, sprite_size_pixels.h - 1 - y), tempdata[x + y * 64]);
                         }
                     }
                 }
@@ -440,11 +516,7 @@ int Editor::update(uint32_t time, Mouse *mouse) {
             }
         } else if(mouse->button_a_pressed) {
             if(!clipboard) {
-                for(auto x = 0; x < sprite_size_pixels.w; x++) {
-                    for(auto y = 0; y < sprite_size_pixels.h; y++) {
-                        tempdata[x + y * sprite_size_pixels.w] = get_pixel(current_sprite_offset + Point(x, y));
-                    }
-                }
+                copy_sprite_to_temp();
             }
             clipboard = !clipboard;
         }

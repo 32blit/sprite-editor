@@ -32,16 +32,22 @@ Rect icon_bounds(Point position) {
     return Rect(position, Size(10, 10));
 }
 
-void ui_icon(UIcon *i, Point position, Mouse *mouse, bool active) {
+void ui_icon(UIcon *i, Point position, Mouse *mouse, bool active, bool disabled) {
     Rect box = icon_bounds(position);
     bool hover = box.contains(mouse->cursor);
-    Pen temp = screen.sprites->palette[2];
-    screen.pen = hover ? Pen(40, 40, 40, 255) : Pen(10, 10, 10, 255);
-    screen.sprites->palette[2] = box.contains(mouse->cursor) ? (active ? Pen(255, 255, 255, 255) : Pen(255, 128, 128, 255)): (active ? Pen(255, 0, 0, 255) : temp);
+    Pen temp1 = screen.sprites->palette[1];
+    Pen temp2 = screen.sprites->palette[2];
+    screen.pen = (hover && !disabled) ? Pen(40, 40, 40, 255) : Pen(10, 10, 10, 255);
+    screen.sprites->palette[2] = box.contains(mouse->cursor) ? (active ? Pen(255, 255, 255, 255) : Pen(255, 128, 128, 255)): (active ? Pen(255, 0, 0, 255) : temp2);
+    if(disabled) {
+        screen.sprites->palette[2] = Pen(40, 40, 40, 255);
+        screen.sprites->palette[1] = Pen(40, 40, 40, 255);
+    }
     screen.rectangle(box);
     box.deflate(1);
     screen.sprite(i->sprite, box.tl());
-    screen.sprites->palette[2] = temp;
+    screen.sprites->palette[1] = temp1;
+    screen.sprites->palette[2] = temp2;
     if(hover) {
         Size textsize = screen.measure_text(i->help, minimal_font);
         textsize.h = box.h;

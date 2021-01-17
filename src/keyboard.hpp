@@ -44,8 +44,8 @@ class Keyboard {
         blit::Size key_size = blit::Size(16, 14);
         blit::Point current_key = blit::Point(0, 0);
 
-        const std::string normal_letters = "`1234567890-=\x08\nqwertyuiop[]\nasdfghjkl;'#\n\x0e\\zxcvbnm,./\x0f\x0d\n ";
-        const std::string shifted_letters = "`!\" $% &*()_+\x08\nQWERTYUIOP{}\nASDFGHJKL:@~\n\x0e|ZXCVBNM<>?\x0f\x0d\n ";
+        const std::string normal_letters = "`1234567890-=\x08\nqwertyuiop[]\nasdfghjkl;'#\n\x0e\\zxcvbnm,./\x0d\n ";
+        const std::string shifted_letters = "`!\" $% &*()_+\x08\nQWERTYUIOP{}\nASDFGHJKL:@~\n\x0e|ZXCVBNM<>?\x0d\n ";
         const int8_t offsets[5] = {0, 8, 18, -10, 70};
         uint8_t key_counts[5];
         Key keys[KEY_COUNT];

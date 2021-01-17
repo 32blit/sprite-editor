@@ -121,9 +121,25 @@ int Keyboard::update(uint32_t time, Mouse *mouse) {
     if(!has_focus) return -1;
 
     if(!mouse->cursor_moved) {
+        Point old_key = current_key;
         current_key.y += mouse->dpad.y;
         if (current_key.y < 0) current_key.y = 0;
         if (current_key.y > 4) current_key.y = 4;
+
+        // Janky logic to handle the shift and \ keys on the left of the 4th row down
+        // TODO: can't actually exit file browse mode without navigating to /
+        if(current_key.y == 3 && old_key.y == 2) {
+            current_key.x += old_key.x < 11 ? 2 : 1;
+        }
+        if(current_key.y == 2 && old_key.y == 3) {
+            if(old_key.x >= 2) {
+                current_key.x -= 2;
+            }
+            else
+            {
+                current_key.x = 0;
+            }
+        }
     
         if(current_key.y != 4) {
             current_key.x += mouse->dpad.x;

@@ -57,7 +57,9 @@ class Editor {
             UIcon{3, "pixel", 9},
             UIcon{4, "sprite", 10},
             UIcon{5, "animate", 1},
-            UIcon{6, "size", 11}
+            UIcon{6, "size", 11},
+            UIcon{7, "mirror", 6},
+            UIcon{8, "roll", 15}
         };
 
     private:
@@ -71,6 +73,7 @@ class Editor {
         void render_status(uint32_t time);
         void render_preview(uint32_t time);
         void outline_rect(blit::Rect cursor);
-        void update_current_sprite();
+        void update_current_sprite(blit::Vec2 viewport_shift);
         void update_sprite_lock();
+        void copy_sprite_to_temp();
 };
