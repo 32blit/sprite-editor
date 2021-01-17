@@ -151,7 +151,7 @@ void Editor::render(uint32_t time, Mouse *mouse) {
     clip.deflate(1);
     screen.pen = background_colour;
     screen.rectangle(clip);
-    clip.deflate(1);
+    //clip.deflate(1);
 
     screen.clip = clip;
 
@@ -204,10 +204,12 @@ void Editor::render(uint32_t time, Mouse *mouse) {
         // animation start/end cursors
         screen.pen = Pen(128, 255, 128, 200);
         cursor = Rect(draw_offset + (((anim_start * 8) - view_offset) * view_zoom), sprite_size_pixels * view_zoom);
+        cursor.inflate(1);
         outline_rect(cursor);
 
         screen.pen = Pen(128, 128, 255, 200);
         cursor = Rect(draw_offset + (((anim_end * 8) - view_offset) * view_zoom), sprite_size_pixels * view_zoom);
+        cursor.inflate(1);
         outline_rect(cursor);
     }
 
