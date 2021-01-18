@@ -1,11 +1,11 @@
 title: Sprite Editor
 description: Sprite Editor
-author: gadetoid
+author: gadgetoid
 splash:
   file: assets/splash.png
 icon:
   file: assets/no-icon.png
-version: v0.0.1
+version: v0.0.3
 category: utility
 filetypes:
   - bmp
